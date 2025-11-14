@@ -77,7 +77,17 @@ public class NoteController {
 
     @GetMapping("/{id}")
     public Note detail(@PathVariable Long id) {
-        return noteService.getById(id);
+        Note note = noteService.getById(id);
+        // 确保内容字段被填充
+        if (note != null && note.getContent() == null) {
+            try {
+                note.setContent(noteService.getNoteContent(id));
+            } catch (Exception e) {
+                // 如果获取内容失败，保持content为null
+                note.setContent("");
+            }
+        }
+        return note;
     }
 
     @GetMapping("/{id}/content")

@@ -1,10 +1,23 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fanfan.aiknowledgebasebackend.entity.*;
-import com.fanfan.aiknowledgebasebackend.mapper.*;
+import com.fanfan.aiknowledgebasebackend.dto.BatchDeleteRequest;
+import com.fanfan.aiknowledgebasebackend.dto.CategoryRequest;
+import com.fanfan.aiknowledgebasebackend.dto.CatReq;
+import com.fanfan.aiknowledgebasebackend.entity.LinkCategory;
+import com.fanfan.aiknowledgebasebackend.entity.Mindmap;
+import com.fanfan.aiknowledgebasebackend.entity.MindmapCategory;
+import com.fanfan.aiknowledgebasebackend.entity.Note;
+import com.fanfan.aiknowledgebasebackend.entity.NoteCategory;
+import com.fanfan.aiknowledgebasebackend.entity.User;
+import com.fanfan.aiknowledgebasebackend.mapper.LinkCategoryMapper;
+import com.fanfan.aiknowledgebasebackend.mapper.MindmapCategoryMapper;
+import com.fanfan.aiknowledgebasebackend.mapper.MindmapMapper;
+import com.fanfan.aiknowledgebasebackend.mapper.NoteCategoryMapper;
+import com.fanfan.aiknowledgebasebackend.mapper.NoteMapper;
+import com.fanfan.aiknowledgebasebackend.service.MindmapService;
+import com.fanfan.aiknowledgebasebackend.service.NoteService;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
-import lombok.Data;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,18 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-@Data
-class CategoryRequest {
-    private String name;
-    private Long parentId;
-    private Integer sortOrder;
-    private String icon;
-    private String description;
-    private String visibility;
-    private String badgeText;
-    private String backgroundStyle;
-}
 
 @RestController
 @RequestMapping("/api/categories")
@@ -33,12 +34,20 @@ public class CategoryController {
     private final MindmapCategoryMapper mindmapCategoryMapper;
     private final LinkCategoryMapper linkCategoryMapper;
     private final UserService userService;
+    private final NoteService noteService;
+    private final MindmapService mindmapService;
+    private final NoteMapper noteMapper;
+    private final MindmapMapper mindmapMapper;
 
-    public CategoryController(NoteCategoryMapper noteCategoryMapper, MindmapCategoryMapper mindmapCategoryMapper, LinkCategoryMapper linkCategoryMapper, UserService userService) {
+    public CategoryController(NoteCategoryMapper noteCategoryMapper, MindmapCategoryMapper mindmapCategoryMapper, LinkCategoryMapper linkCategoryMapper, UserService userService, NoteService noteService, MindmapService mindmapService, NoteMapper noteMapper, MindmapMapper mindmapMapper) {
         this.noteCategoryMapper = noteCategoryMapper;
         this.mindmapCategoryMapper = mindmapCategoryMapper;
         this.linkCategoryMapper = linkCategoryMapper;
         this.userService = userService;
+        this.noteService = noteService;
+        this.mindmapService = mindmapService;
+        this.noteMapper = noteMapper;
+        this.mindmapMapper = mindmapMapper;
     }
 
     @GetMapping("/notes")
@@ -139,7 +148,34 @@ public class CategoryController {
         if (c == null || !c.getUserId().equals(u.getId())) {
             throw new RuntimeException("分类不存在或无权限访问");
         }
+        
+        // 删除分类下的所有笔记
+        List<Note> notes = noteMapper.selectList(new LambdaQueryWrapper<Note>().eq(Note::getCategoryId, id));
+        for (Note note : notes) {
+            noteService.deleteNote(note.getId());
+        }
+        
+        // 删除分类
         noteCategoryMapper.deleteById(id);
+    }
+    
+    // 批量删除笔记分类
+    @DeleteMapping("/notes/batch")
+    public void batchDeleteNotes(@RequestBody BatchDeleteRequest req, @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+        User u = userService.findByUsername(principal.getUsername());
+        for (Long id : req.getIds()) {
+            NoteCategory c = noteCategoryMapper.selectById(id);
+            if (c != null && c.getUserId().equals(u.getId())) {
+                // 删除分类下的所有笔记
+                List<Note> notes = noteMapper.selectList(new LambdaQueryWrapper<Note>().eq(Note::getCategoryId, id));
+                for (Note note : notes) {
+                    noteService.deleteNote(note.getId());
+                }
+                
+                // 删除分类
+                noteCategoryMapper.deleteById(id);
+            }
+        }
     }
 
     @GetMapping("/mindmaps")
@@ -201,6 +237,43 @@ public class CategoryController {
         return existing;
     }
 
+    @DeleteMapping("/mindmaps/{id}")
+    public void delMindmap(@PathVariable Long id, @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+        User u = userService.findByUsername(principal.getUsername());
+        MindmapCategory c = mindmapCategoryMapper.selectById(id);
+        if (c == null || !c.getUserId().equals(u.getId())) {
+            throw new RuntimeException("分类不存在或无权限访问");
+        }
+        
+        // 删除分类下的所有思维导图
+        List<Mindmap> mindmaps = mindmapMapper.selectList(new LambdaQueryWrapper<Mindmap>().eq(Mindmap::getCategoryId, id));
+        for (Mindmap mindmap : mindmaps) {
+            mindmapService.delete(mindmap.getId());
+        }
+        
+        // 删除分类
+        mindmapCategoryMapper.deleteById(id);
+    }
+    
+    // 批量删除思维导图分类
+    @DeleteMapping("/mindmaps/batch")
+    public void batchDeleteMindmaps(@RequestBody BatchDeleteRequest req, @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+        User u = userService.findByUsername(principal.getUsername());
+        for (Long id : req.getIds()) {
+            MindmapCategory c = mindmapCategoryMapper.selectById(id);
+            if (c != null && c.getUserId().equals(u.getId())) {
+                // 删除分类下的所有思维导图
+                List<Mindmap> mindmaps = mindmapMapper.selectList(new LambdaQueryWrapper<Mindmap>().eq(Mindmap::getCategoryId, id));
+                for (Mindmap mindmap : mindmaps) {
+                    mindmapService.delete(mindmap.getId());
+                }
+                
+                // 删除分类
+                mindmapCategoryMapper.deleteById(id);
+            }
+        }
+    }
+
     @GetMapping("/links")
     public List<LinkCategory> listLinks(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
         User u = userService.findByUsername(principal.getUsername());
@@ -230,11 +303,5 @@ public class CategoryController {
         c.setName(req.getName());
         linkCategoryMapper.updateById(c);
         return c;
-    }
-
-    @Data
-    public static class CatReq {
-        private String name;
-        private Long parentId;
     }
 }

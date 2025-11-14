@@ -32,6 +32,7 @@ public class MindmapServiceImpl implements MindmapService {
         m.setTitle(title != null ? title : "思维导图");
         m.setDescription(description);
         m.setCoverKey(coverKey);
+        m.setOssKey(""); // 设置默认空字符串，避免数据库约束错误
         m.setVisibility(visibility != null ? visibility : "private");
         m.setFormat("xmind");
         m.setLikes(0);
@@ -77,11 +78,18 @@ public class MindmapServiceImpl implements MindmapService {
         m.setCategoryId(categoryId);
         m.setTitle(title);
         m.setDescription(description);
-        m.setOssKey(objectKey);
+        m.setOssKey(objectKey); // 正确设置ossKey
         String format = "xmind";
         String name = file.getOriginalFilename();
-        if (name != null && name.contains(".")) format = name.substring(name.lastIndexOf('.') + 1);
-        m.setFormat(format);
+        if (name != null && name.contains(".")) {
+            format = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
+        }
+        // 支持mmap和xmind格式
+        if ("mmap".equals(format)) {
+            m.setFormat("mmap");
+        } else {
+            m.setFormat("xmind");
+        }
         m.setVisibility(visibility);
         m.setNodeCount(nodeCount);
         m.setLikes(0);

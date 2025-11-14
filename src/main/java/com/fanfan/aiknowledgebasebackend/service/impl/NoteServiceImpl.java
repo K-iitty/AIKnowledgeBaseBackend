@@ -49,6 +49,7 @@ public class NoteServiceImpl implements NoteService {
         n.setLikes(0);
         n.setViews(0);
         n.setWordCount(content == null ? 0 : content.length());
+        n.setContent(content); // 保存原始内容
         n.setCreatedAt(LocalDateTime.now());
         n.setUpdatedAt(LocalDateTime.now());
         noteMapper.insert(n);
@@ -63,10 +64,11 @@ public class NoteServiceImpl implements NoteService {
         
         // 解析文件内容
         String description = title;
+        String content = "";
         int wordCount = 0;
         
         try {
-            String content = new String(file.getBytes(), StandardCharsets.UTF_8);
+            content = new String(file.getBytes(), StandardCharsets.UTF_8);
             wordCount = content.length();
             // 提取第一行作为描述
             String[] lines = content.split("\n");
@@ -86,6 +88,7 @@ public class NoteServiceImpl implements NoteService {
         n.setTitle(title);
         n.setDescription(description);
         n.setOssKey(objectKey);
+        n.setContent(content); // 保存原始内容
         String format = "md";
         String name = file.getOriginalFilename();
         if (name != null && name.contains(".")) format = name.substring(name.lastIndexOf('.') + 1);
@@ -188,7 +191,17 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public Note getById(Long id) {
-        return noteMapper.selectById(id);
+        Note note = noteMapper.selectById(id);
+        // 确保内容字段被填充
+        if (note != null && note.getContent() == null) {
+            try {
+                note.setContent(getNoteContent(id));
+            } catch (Exception e) {
+                // 如果获取内容失败，保持content为null
+                note.setContent("");
+            }
+        }
+        return note;
     }
 
     @Override
@@ -200,6 +213,7 @@ public class NoteServiceImpl implements NoteService {
             n.setOssKey(objectKey);
             n.setFormat("md");
             n.setWordCount(content.length());
+            n.setContent(content); // 更新内容
         }
         if (title != null) n.setTitle(title);
         if (description != null) n.setDescription(description);
@@ -229,6 +243,13 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public String getNoteContent(Long id) {
         try {
+            // 首先尝试从content字段获取内容
+            Note note = noteMapper.selectById(id);
+            if (note != null && note.getContent() != null) {
+                return note.getContent();
+            }
+            
+            // 如果content字段为空，则从OSS获取
             InputStream is = download(id);
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         } catch (Exception e) {

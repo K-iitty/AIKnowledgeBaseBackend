@@ -26,4 +26,5 @@ public class Note {
     private Integer likes;
     private Integer views;
     private Integer wordCount;
+    private String content; // 添加内容字段以支持实时编辑
 }

@@ -37,8 +37,7 @@
         <lombok.version>1.18.32</lombok.version>
         <commonmark.version>0.21.0</commonmark.version>
         <flexmark.version>0.64.8</flexmark.version>
-        <spring-ai.version>0.8.1</spring-ai.version>
-        <langchain4j.version>0.33.0</langchain4j.version>
+        <spring-ai-alibaba.version>1.0.0.2</spring-ai-alibaba.version>
     </properties>
     
     <repositories>
@@ -46,6 +45,14 @@
             <id>spring-milestones</id>
             <name>Spring Milestones</name>
             <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>spring-ai-alibaba</id>
+            <name>Spring AI Alibaba</name>
+            <url>https://repo.spring.io/spring-ai-alibaba</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -162,9 +169,9 @@
         
         <!-- Spring AI DashScope integration -->
         <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-dashscope-spring-boot-starter</artifactId>
-            <version>${spring-ai.version}</version>
+            <groupId>com.alibaba.cloud.ai</groupId>
+            <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
+            <version>${spring-ai-alibaba.version}</version>
         </dependency>
         
     </dependencies>
