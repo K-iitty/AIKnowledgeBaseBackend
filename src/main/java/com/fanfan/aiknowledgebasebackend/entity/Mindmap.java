@@ -29,4 +29,6 @@ public class Mindmap {
     private Integer views;
     @TableField("node_count")
     private Integer nodeCount;
+    @TableField("content")
+    private String content; // 存储思维导图的JSON格式节点数据
 }
