@@ -7,4 +7,5 @@ public interface OssService {
     String uploadBytes(String dir, String filename, byte[] data);
     void delete(String objectKey);
     java.io.InputStream get(String objectKey);
+    String getPublicUrl(String objectKey);
 }

@@ -65,4 +65,7 @@ public interface MindmapService {
     
     // 新增方法：获取节点图片
     java.util.List<java.util.Map<String, Object>> getNodeImages(Long id, String nodeId);
+    
+    // 新增方法：获取OSS公开URL
+    String getPublicUrl(String ossKey);
 }

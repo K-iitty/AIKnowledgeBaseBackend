@@ -107,6 +107,7 @@ public class MindmapController {
         String ossKey = mindmapService.uploadImage(u.getId(), id, nodeId, file);
         UploadImageResp resp = new UploadImageResp();
         resp.setOssKey(ossKey);
+        resp.setUrl(mindmapService.getPublicUrl(ossKey));
         return resp;
     }
 
@@ -189,6 +190,7 @@ public class MindmapController {
     @Data
     public static class UploadImageResp {
         private String ossKey;
+        private String url;
     }
     
     @Data

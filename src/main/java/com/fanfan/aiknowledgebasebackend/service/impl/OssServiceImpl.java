@@ -60,4 +60,11 @@ public class OssServiceImpl implements OssService {
     public java.io.InputStream get(String objectKey) {
         return oss.getObject(bucket, objectKey).getObjectContent();
     }
+
+    @Override
+    public String getPublicUrl(String objectKey) {
+        // 生成阿里云OSS公开访问URL
+        // 格式: https://{bucket-name}.{endpoint}/{objectKey}
+        return "https://" + bucket + ".oss-cn-beijing.aliyuncs.com/" + objectKey;
+    }
 }

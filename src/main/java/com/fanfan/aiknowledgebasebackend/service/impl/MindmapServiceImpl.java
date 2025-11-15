@@ -46,7 +46,8 @@ public class MindmapServiceImpl implements MindmapService {
         Mindmap m = new Mindmap();
         m.setUserId(userId);
         m.setCategoryId(categoryId);
-        m.setTitle(title != null ? title : "思维导图");
+        String mindmapTitle = title != null ? title : "思维导图";
+        m.setTitle(mindmapTitle);
         m.setDescription(description);
         m.setCoverKey(coverKey);
         m.setOssKey(""); // 设置默认空字符串，避免数据库约束错误
@@ -58,8 +59,8 @@ public class MindmapServiceImpl implements MindmapService {
         m.setCreatedAt(java.time.LocalDateTime.now());
         m.setUpdatedAt(java.time.LocalDateTime.now());
         
-        // 创建默认的思维导图内容（一个父节点和两个子节点）
-        String defaultContent = createDefaultMindmapContent();
+        // 创建默认的思维导图内容（一个父节点和两个子节点），使用标题作为根节点
+        String defaultContent = createDefaultMindmapContent(mindmapTitle);
         m.setContent(defaultContent);
         
         mindmapMapper.insert(m);
@@ -512,63 +513,38 @@ public class MindmapServiceImpl implements MindmapService {
         return new java.util.ArrayList<>();
     }
     
+    @Override
+    public String getPublicUrl(String ossKey) {
+        return ossService.getPublicUrl(ossKey);
+    }
+    
     /**
      * 创建默认的思维导图内容（一个父节点和两个子节点）
+     * @param title 思维导图标题，将作为根节点的主题
      */
-    private String createDefaultMindmapContent() {
+    private String createDefaultMindmapContent(String title) {
+        // 转义标题中的特殊字符
+        String escapedTitle = title.replace("\"", "\\\"").replace("\n", "\\n");
+        
         return "{\n" +
                 "  \"nodeData\": {\n" +
-                "    \"id\": \"me-root\",\n" +
-                "    \"topic\": \"中心主题\",\n" +
+                "    \"id\": \"root\",\n" +
+                "    \"topic\": \"" + escapedTitle + "\",\n" +
                 "    \"root\": true,\n" +
-                "    \"style\": {\n" +
-                "      \"borderColor\": \"#42b983\",\n" +
-                "      \"borderWidth\": \"2px\",\n" +
-                "      \"borderStyle\": \"solid\",\n" +
-                "      \"fontSize\": \"16px\",\n" +
-                "      \"fontWeight\": \"bold\"\n" +
-                "    },\n" +
-                "    \"note\": \"\",\n" +
-                "    \"images\": [],\n" +
                 "    \"children\": [\n" +
                 "      {\n" +
-                "        \"id\": \"" + UUID.randomUUID().toString() + "\",\n" +
+                "        \"id\": \"child1\",\n" +
                 "        \"topic\": \"子主题1\",\n" +
-                "        \"style\": {\n" +
-                "          \"borderColor\": \"#409eff\",\n" +
-                "          \"borderWidth\": \"1px\",\n" +
-                "          \"borderStyle\": \"solid\"\n" +
-                "        },\n" +
-                "        \"note\": \"\",\n" +
-                "        \"images\": [],\n" +
                 "        \"children\": []\n" +
                 "      },\n" +
                 "      {\n" +
-                "        \"id\": \"" + UUID.randomUUID().toString() + "\",\n" +
+                "        \"id\": \"child2\",\n" +
                 "        \"topic\": \"子主题2\",\n" +
-                "        \"style\": {\n" +
-                "          \"borderColor\": \"#409eff\",\n" +
-                "          \"borderWidth\": \"1px\",\n" +
-                "          \"borderStyle\": \"solid\"\n" +
-                "        },\n" +
-                "        \"note\": \"\",\n" +
-                "        \"images\": [],\n" +
                 "        \"children\": []\n" +
                 "      }\n" +
                 "    ]\n" +
                 "  },\n" +
-                "  \"linkData\": {},\n" +
-                "  \"imageData\": {},\n" +
-                "  \"resourceData\": {},\n" +
-                "  \"theme\": {\n" +
-                "    \"main-color\": \"#42b983\",\n" +
-                "    \"main-bgcolor\": \"#ffffff\",\n" +
-                "    \"main-border-color\": \"#42b983\",\n" +
-                "    \"main-border-width\": \"1px\",\n" +
-                "    \"main-border-style\": \"solid\",\n" +
-                "    \"main-font-size\": \"14px\",\n" +
-                "    \"main-font-family\": \"sans-serif\"\n" +
-                "  }\n" +
+                "  \"linkData\": {}\n" +
                 "}";
     }
 }
