@@ -17,7 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -140,7 +142,25 @@ public class MindmapServiceImpl implements MindmapService {
     public void delete(Long id) {
         Mindmap m = mindmapMapper.selectById(id);
         if (m != null) {
-            ossService.delete(m.getOssKey());
+            // 只有当 ossKey 不为空且不是空字符串时才删除 OSS 文件
+            String ossKey = m.getOssKey();
+            if (ossKey != null && !ossKey.trim().isEmpty()) {
+                try {
+                    ossService.delete(ossKey);
+                } catch (Exception e) {
+                    // 删除 OSS 文件失败不影响删除思维导图记录
+                    System.err.println("删除思维导图OSS文件失败: " + ossKey + ", 错误: " + e.getMessage());
+                }
+            }
+            
+            // 删除关联的图片资源
+            try {
+                deleteAllResources(id);
+            } catch (Exception e) {
+                System.err.println("删除思维导图关联资源失败: " + e.getMessage());
+            }
+            
+            // 删除数据库记录
             mindmapMapper.deleteById(id);
         }
     }
@@ -359,6 +379,14 @@ public class MindmapServiceImpl implements MindmapService {
             throw new RuntimeException("思维导图不存在");
         }
         
+        // 清理被删除节点的图片资源
+        try {
+            cleanupOrphanedImages(id, content);
+        } catch (Exception e) {
+            // 清理失败不影响主流程，只记录日志
+            System.err.println("清理孤立图片资源失败: " + e.getMessage());
+        }
+        
         mindmap.setContent(content);
         mindmap.setNodeCount(nodeCount);
         mindmap.setUpdatedAt(LocalDateTime.now());
@@ -516,6 +544,87 @@ public class MindmapServiceImpl implements MindmapService {
     @Override
     public String getPublicUrl(String ossKey) {
         return ossService.getPublicUrl(ossKey);
+    }
+    
+    /**
+     * 删除思维导图的所有关联资源
+     */
+    private void deleteAllResources(Long mindmapId) {
+        LambdaQueryWrapper<MindmapResource> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(MindmapResource::getMindmapId, mindmapId);
+        List<MindmapResource> resources = mindmapResourceMapper.selectList(wrapper);
+        
+        for (MindmapResource resource : resources) {
+            String ossKey = resource.getOssKey();
+            // 只有当 ossKey 不为空且不是空字符串时才删除
+            if (ossKey != null && !ossKey.trim().isEmpty()) {
+                try {
+                    ossService.delete(ossKey);
+                } catch (Exception e) {
+                    System.err.println("删除资源文件失败: " + ossKey + ", 错误: " + e.getMessage());
+                }
+            }
+            // 删除数据库记录
+            mindmapResourceMapper.deleteById(resource.getId());
+        }
+    }
+    
+    /**
+     * 清理孤立的图片资源（节点已删除但图片资源仍在数据库中）
+     */
+    private void cleanupOrphanedImages(Long mindmapId, String newContent) {
+        try {
+            // 解析新内容，收集所有存在的节点ID
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.Map<String, Object> content = mapper.readValue(newContent, java.util.Map.class);
+            java.util.Set<String> existingNodeIds = new java.util.HashSet<>();
+            collectNodeIds((java.util.Map<String, Object>) content.get("nodeData"), existingNodeIds);
+            
+            // 获取数据库中所有的图片资源
+            LambdaQueryWrapper<MindmapResource> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(MindmapResource::getMindmapId, mindmapId);
+            List<MindmapResource> allResources = mindmapResourceMapper.selectList(wrapper);
+            
+            // 删除孤立的资源（节点ID不在新内容中的资源）
+            for (MindmapResource resource : allResources) {
+                String nodeId = resource.getNodeId();
+                if (nodeId != null && !existingNodeIds.contains(nodeId)) {
+                    // 这是一个孤立的资源，需要删除
+                    String ossKey = resource.getOssKey();
+                    // 只有当 ossKey 不为空且不是空字符串时才删除
+                    if (ossKey != null && !ossKey.trim().isEmpty()) {
+                        try {
+                            ossService.delete(ossKey);
+                        } catch (Exception e) {
+                            System.err.println("删除OSS文件失败: " + ossKey + ", 错误: " + e.getMessage());
+                        }
+                    }
+                    // 从数据库删除记录
+                    mindmapResourceMapper.deleteById(resource.getId());
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("清理孤立图片失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 递归收集所有节点ID
+     */
+    private void collectNodeIds(java.util.Map<String, Object> node, java.util.Set<String> nodeIds) {
+        if (node == null) return;
+        
+        String nodeId = (String) node.get("id");
+        if (nodeId != null) {
+            nodeIds.add(nodeId);
+        }
+        
+        java.util.List<java.util.Map<String, Object>> children = (java.util.List<java.util.Map<String, Object>>) node.get("children");
+        if (children != null) {
+            for (java.util.Map<String, Object> child : children) {
+                collectNodeIds(child, nodeIds);
+            }
+        }
     }
     
     /**
