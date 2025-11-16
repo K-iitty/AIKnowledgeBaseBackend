@@ -246,19 +246,17 @@ public class AiController {
         }
         new Thread(() -> {
             try {
-                // Use enhanced AI service for streaming
-                String answer = enhancedAiService.streamChatWithMemory(
-                    u.getId(), sessionId, q, mode, categoryId
+                // Use enhanced AI service for real streaming with callback
+                enhancedAiService.streamChatWithMemoryRealtime(
+                    u.getId(), sessionId, q, mode, categoryId,
+                    chunk -> {
+                        try {
+                            emitter.send(SseEmitter.event().data(chunk));
+                        } catch (Exception e) {
+                            throw new RuntimeException("发送流式数据失败", e);
+                        }
+                    }
                 );
-                
-                // Simulate streaming by sending the response in chunks
-                int chunkSize = 50; // Send ~50 characters at a time
-                for (int i = 0; i < answer.length(); i += chunkSize) {
-                    int end = Math.min(i + chunkSize, answer.length());
-                    String chunk = answer.substring(i, end);
-                    emitter.send(SseEmitter.event().data(chunk));
-                    Thread.sleep(50); // Small delay to simulate streaming
-                }
                 
                 emitter.send(SseEmitter.event().data("[DONE]"));
                 emitter.complete();

@@ -298,4 +298,152 @@ public class EnhancedAiService {
     public void rebuildUserRagIndex(Long userId) {
         ragService.buildUserIndex(userId);
     }
+
+    /**
+     * Functional interface for streaming callback
+     */
+    @FunctionalInterface
+    public interface StreamCallback {
+        void onChunk(String chunk);
+    }
+
+    /**
+     * Real-time streaming chat with conversation memory and RAG support
+     */
+    public void streamChatWithMemoryRealtime(Long userId, Long sessionId, String question, 
+                                             String mode, Long categoryId, StreamCallback callback) {
+        try {
+            // Get session and validate
+            ChatSession session = chatSessionMapper.selectById(sessionId);
+            if (session == null || !session.getUserId().equals(userId)) {
+                throw new RuntimeException("会话不存在或无权限");
+            }
+
+            // Build conversation context
+            List<Map<String, String>> messages = getOrCreateConversationMemory(sessionId);
+            
+            // Add RAG context for local mode
+            if ("local".equalsIgnoreCase(mode)) {
+                String ragContext = ragService.getRelevantContext(userId, question, 3);
+                if (!ragContext.isEmpty()) {
+                    messages.add(createMessage("system", "你是知识库助手。基于以下本地笔记内容优先回答用户问题：\n" + ragContext));
+                }
+            }
+
+            // Add user message
+            messages.add(createMessage("user", question));
+
+            // Keep only recent messages to avoid context overflow
+            if (messages.size() > MAX_MEMORY_MESSAGES) {
+                messages = messages.subList(messages.size() - MAX_MEMORY_MESSAGES, messages.size());
+            }
+
+            // Call AI with streaming
+            StringBuilder fullAnswer = new StringBuilder();
+            callAiWithMessagesStreaming(messages, chunk -> {
+                fullAnswer.append(chunk);
+                callback.onChunk(chunk);
+            });
+
+            // Store conversation in memory
+            messages.add(createMessage("assistant", fullAnswer.toString()));
+            conversationMemory.put(sessionId, messages);
+
+            // Persist to database
+            persistConversation(sessionId, question, fullAnswer.toString());
+
+            // Update session timestamp
+            session.setUpdatedAt(LocalDateTime.now());
+            chatSessionMapper.updateById(session);
+
+        } catch (Exception e) {
+            throw new RuntimeException("AI对话失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Call AI with streaming support
+     */
+    private void callAiWithMessagesStreaming(List<Map<String, String>> messages, StreamCallback callback) {
+        try {
+            // Validate API key first
+            String apiKey = aiConfig.getApiKey();
+            if (apiKey == null || apiKey.trim().isEmpty()) {
+                throw new RuntimeException("DashScope API Key 未配置");
+            }
+            
+            String url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+            Map<String, Object> body = new HashMap<>();
+            body.put("model", aiConfig.getModel());
+            body.put("messages", messages);
+            body.put("stream", true);  // Enable streaming
+            if (aiConfig.getTemperature() != null) {
+                body.put("temperature", aiConfig.getTemperature());
+            }
+            
+            String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(body);
+            
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(url))
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "text/event-stream")
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+            
+            java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder()
+                    .version(java.net.http.HttpClient.Version.HTTP_1_1)
+                    .build();
+            
+            // Use streaming response handler
+            java.net.http.HttpResponse<java.io.InputStream> resp = httpClient.send(
+                request, 
+                java.net.http.HttpResponse.BodyHandlers.ofInputStream()
+            );
+            
+            if (resp.statusCode() / 100 != 2) {
+                throw new RuntimeException("AI服务返回错误: " + resp.statusCode());
+            }
+            
+            // Read stream line by line
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(resp.body(), java.nio.charset.StandardCharsets.UTF_8))) {
+                
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("data: ")) {
+                        String data = line.substring(6).trim();
+                        
+                        if (data.equals("[DONE]")) {
+                            break;
+                        }
+                        
+                        if (data.isEmpty()) {
+                            continue;
+                        }
+                        
+                        try {
+                            Map<?,?> map = new com.fasterxml.jackson.databind.ObjectMapper().readValue(data, Map.class);
+                            List<?> choices = (List<?>) map.get("choices");
+                            if (choices != null && !choices.isEmpty()) {
+                                Map<?,?> choice = (Map<?,?>) choices.get(0);
+                                Map<?,?> delta = (Map<?,?>) choice.get("delta");
+                                if (delta != null && delta.containsKey("content")) {
+                                    String content = (String) delta.get("content");
+                                    if (content != null && !content.isEmpty()) {
+                                        callback.onChunk(content);
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.err.println("解析流式数据失败: " + e.getMessage());
+                        }
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            throw new RuntimeException("调用AI流式接口失败: " + e.getMessage(), e);
+        }
+    }
 }
