@@ -32,5 +32,32 @@ public class FileController {
         
         return ossService.downloadAndUpload(url, dir);
     }
+
+    @GetMapping("/proxy-pdf")
+    public void proxyPdf(@RequestParam String key, jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            // 从 OSS 获取文件
+            java.io.InputStream inputStream = ossService.get(key);
+            
+            // 设置响应头
+            response.setContentType("application/pdf");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+            response.setHeader("Access-Control-Allow-Headers", "*");
+            
+            // 将文件流写入响应
+            java.io.OutputStream outputStream = response.getOutputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            
+            inputStream.close();
+            outputStream.flush();
+        } catch (Exception e) {
+            throw new RuntimeException("PDF 代理失败: " + e.getMessage());
+        }
+    }
 }
 

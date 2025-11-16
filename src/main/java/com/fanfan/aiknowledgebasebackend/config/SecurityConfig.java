@@ -32,13 +32,18 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/ai/**",
+                                "/api/files/proxy-pdf",
                                 "/swagger-ui.html", 
                                 "/swagger-ui/**", 
                                 "/v3/api-docs/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                // 禁用 X-Frame-Options 以允许跨端口 iframe 嵌入（用于 PDF 显示）
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.disable())
+                );
         return http.build();
     }
 
