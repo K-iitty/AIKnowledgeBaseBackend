@@ -8,4 +8,5 @@ public interface OssService {
     void delete(String objectKey);
     java.io.InputStream get(String objectKey);
     String getPublicUrl(String objectKey);
+    String downloadAndUpload(String imageUrl, String dir);
 }
