@@ -1,5 +1,6 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
+import com.fanfan.aiknowledgebasebackend.dto.*;
 import com.fanfan.aiknowledgebasebackend.entity.Mindmap;
 import com.fanfan.aiknowledgebasebackend.entity.MindmapResource;
 import com.fanfan.aiknowledgebasebackend.entity.MindmapTag;
@@ -9,7 +10,6 @@ import com.fanfan.aiknowledgebasebackend.service.UserService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import lombok.Data;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class MindmapController {
 
     @PostMapping
     public Mindmap create(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
-                          @RequestBody CreateReq req) {
+                          @RequestBody MindmapCreateRequest req) {
         User u = userService.findByUsername(principal.getUsername());
         return mindmapService.create(u.getId(), req.getCategoryId(), req.getTitle(), req.getDescription(), req.getCoverKey(), req.getVisibility());
     }
@@ -50,7 +50,7 @@ public class MindmapController {
     }
 
     @PutMapping("/{id}")
-    public Mindmap update(@PathVariable Long id, @RequestBody UpdateReq req) {
+    public Mindmap update(@PathVariable Long id, @RequestBody MindmapUpdateRequest req) {
         return mindmapService.update(id, req.getTitle(), req.getDescription(), req.getCoverKey(), req.getVisibility());
     }
 
@@ -71,7 +71,7 @@ public class MindmapController {
 
     // 新增：保存思维导图内容
     @PostMapping("/{id}/content")
-    public void saveContent(@PathVariable Long id, @RequestBody SaveContentReq req) {
+    public void saveContent(@PathVariable Long id, @RequestBody MindmapContentRequest req) {
         mindmapService.saveContent(id, req.getContent(), req.getNodeCount());
     }
 
@@ -79,14 +79,14 @@ public class MindmapController {
     @PutMapping("/{id}/node/{nodeId}/note")
     public void updateNodeNote(@PathVariable Long id, 
                                @PathVariable String nodeId,
-                               @RequestBody UpdateNodeNoteReq req) {
+                               @RequestBody MindmapNodeNoteRequest req) {
         mindmapService.updateNodeNote(id, nodeId, req.getNote());
     }
     
     // 新增：更新整个思维导图数据（包括节点结构、备注、图片等）
     @PutMapping("/{id}/data")
     public void updateMindmapData(@PathVariable Long id,
-                                  @RequestBody UpdateMindmapDataReq req) {
+                                  @RequestBody MindmapContentRequest req) {
         mindmapService.updateMindmapData(id, req.getContent(), req.getNodeCount());
     }
 
@@ -98,17 +98,14 @@ public class MindmapController {
 
     // 新增：上传图片
     @PostMapping("/{id}/images")
-    public UploadImageResp uploadImage(
+    public ImageUploadResponse uploadImage(
             @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
             @PathVariable Long id,
             @RequestParam String nodeId,
             @RequestParam("file") MultipartFile file) {
         User u = userService.findByUsername(principal.getUsername());
         String ossKey = mindmapService.uploadImage(u.getId(), id, nodeId, file);
-        UploadImageResp resp = new UploadImageResp();
-        resp.setOssKey(ossKey);
-        resp.setUrl(mindmapService.getPublicUrl(ossKey));
-        return resp;
+        return new ImageUploadResponse(ossKey, mindmapService.getPublicUrl(ossKey));
     }
 
     // 新增：获取节点图片
@@ -127,7 +124,7 @@ public class MindmapController {
     @PostMapping("/tags")
     public MindmapTag createTag(
             @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
-            @RequestBody CreateTagReq req) {
+            @RequestBody MindmapTagRequest req) {
         User u = userService.findByUsername(principal.getUsername());
         return mindmapService.createTag(u.getId(), req.getName(), req.getColor());
     }
@@ -158,72 +155,29 @@ public class MindmapController {
         return mindmapService.getTagsByMindmapId(id);
     }
 
-    // 新增：获取思维导图所有资源
     @GetMapping("/{id}/resources")
     public List<MindmapResource> getResourcesByMindmapId(@PathVariable Long id) {
         return mindmapService.getResourcesByMindmapId(id);
     }
 
-    @Data
-    public static class UpdateReq {
-        private String title;
-        private String description;
-        private String coverKey;
-        private String visibility;
+    // 删除节点图片 - 通过从思维导图内容中移除图片引用
+    @DeleteMapping("/{id}/node/{nodeId}/images/{imageId}")
+    public void deleteNodeImage(@PathVariable Long id,
+                                @PathVariable String nodeId,
+                                @PathVariable String imageId) {
+        // TODO: 实现从节点中删除特定图片的逻辑
+        // 暂时注释掉，因为 MindmapService 中没有此方法
+        // mindmapService.deleteNodeImage(id, nodeId, imageId);
+        throw new UnsupportedOperationException("删除节点图片功能待实现");
     }
-    
-    @Data
-    public static class CreateReq {
-        private Long categoryId;
-        private String title;
-        private String description;
-        private String coverKey;
-        private String visibility;
-    }
-    
-    @Data
-    public static class SaveContentReq {
-        private String content;
-        private Integer nodeCount;
-    }
-    
-    @Data
-    public static class UploadImageResp {
-        private String ossKey;
-        private String url;
-    }
-    
-    @Data
-    public static class CreateTagReq {
-        private String name;
-        private String color;
-    }
-    
-    @Data
-    public static class UpdateNodeNoteReq {
-        private String note;
-    }
-    
-    @Data
-    public static class UpdateMindmapDataReq {
-        private String content;
-        private Integer nodeCount;
-    }
-    
-    @Data
-    public static class AddNodeImageReq {
-        private java.util.Map<String, Object> image;
-    }
-    
-    // 新增：更新节点图片
+
     @PostMapping("/{id}/node/{nodeId}/images")
     public void addNodeImage(@PathVariable Long id,
                              @PathVariable String nodeId,
-                             @RequestBody AddNodeImageReq req) {
+                             @RequestBody MindmapNodeImageRequest req) {
         mindmapService.addNodeImage(id, nodeId, req.getImage());
     }
     
-    // 新增：获取节点图片
     @GetMapping("/{id}/node/{nodeId}/images")
     public java.util.List<java.util.Map<String, Object>> getNodeImages(@PathVariable Long id,
                                                                        @PathVariable String nodeId) {

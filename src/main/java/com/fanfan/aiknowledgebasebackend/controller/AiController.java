@@ -13,12 +13,16 @@ import java.util.List;
 import java.util.Map;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fanfan.aiknowledgebasebackend.entity.ChatSession;
+import com.fanfan.aiknowledgebasebackend.dto.ChatRequest;
+import com.fanfan.aiknowledgebasebackend.dto.ChatSessionRequest;
+import com.fanfan.aiknowledgebasebackend.dto.PolishRequest;
+import com.fanfan.aiknowledgebasebackend.dto.SummaryRequest;
 import com.fanfan.aiknowledgebasebackend.entity.ChatMessage;
+import com.fanfan.aiknowledgebasebackend.entity.ChatSession;
 import com.fanfan.aiknowledgebasebackend.entity.Note;
 import com.fanfan.aiknowledgebasebackend.entity.User;
-import com.fanfan.aiknowledgebasebackend.mapper.ChatSessionMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.ChatMessageMapper;
+import com.fanfan.aiknowledgebasebackend.mapper.ChatSessionMapper;
 import com.fanfan.aiknowledgebasebackend.service.NoteService;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
 import com.fanfan.aiknowledgebasebackend.service.EnhancedAiService;
@@ -57,7 +61,7 @@ public class AiController {
     private Double temperature;
 
     @PostMapping("/chat")
-    public Map<String, Object> chat(@RequestBody ChatReq req) {
+    public Map<String, Object> chat(@RequestBody ChatRequest req) {
         String url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
         Map<String, Object> body = new HashMap<>();
         body.put("model", model);
@@ -197,7 +201,7 @@ public class AiController {
     }
 
     @PostMapping("/chat/session")
-    public Map<String, Object> chatWithSession(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestBody ChatSessionReq req) {
+    public Map<String, Object> chatWithSession(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestBody ChatSessionRequest req) {
         User u = userService.findByUsername(principal.getUsername());
         ChatSession s = chatSessionMapper.selectById(req.getSessionId());
         if (s == null || !s.getUserId().equals(u.getId())) throw new RuntimeException("会话不存在或无权限");
@@ -287,7 +291,7 @@ public class AiController {
     }
 
     @PostMapping("/polish")
-    public Map<String, Object> polishNote(@RequestBody PolishReq req) {
+    public Map<String, Object> polishNote(@RequestBody PolishRequest req) {
         String content = req.getContent();
         if (content == null || content.trim().isEmpty()) {
             Map<String, Object> error = new HashMap<>();
@@ -336,7 +340,7 @@ public class AiController {
     }
     
     @PostMapping("/generate-summary")
-    public Map<String, Object> generateSummary(@RequestBody SummaryReq req) {
+    public Map<String, Object> generateSummary(@RequestBody SummaryRequest req) {
         String content = req.getContent();
         if (content == null || content.trim().isEmpty()) {
             Map<String, Object> error = new HashMap<>();
@@ -383,28 +387,4 @@ public class AiController {
         }
     }
 
-    public static class ChatReq {
-        private List<Map<String, String>> messages;
-        public List<Map<String, String>> getMessages() { return messages; }
-        public void setMessages(List<Map<String, String>> messages) { this.messages = messages; }
-    }
-    @lombok.Data
-    public static class ChatSessionReq {
-        private Long sessionId;
-        private String question;
-        private String mode; // default | local
-        private Long categoryId;
-    }
-    
-    public static class PolishReq {
-        private String content;
-        public String getContent() { return content; }
-        public void setContent(String content) { this.content = content; }
-    }
-    
-    public static class SummaryReq {
-        private String content;
-        public String getContent() { return content; }
-        public void setContent(String content) { this.content = content; }
-    }
 }

@@ -1,10 +1,10 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
+import com.fanfan.aiknowledgebasebackend.dto.LinkRequest;
 import com.fanfan.aiknowledgebasebackend.entity.Link;
 import com.fanfan.aiknowledgebasebackend.entity.User;
 import com.fanfan.aiknowledgebasebackend.service.LinkService;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
-import lombok.Data;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +23,7 @@ public class LinkController {
     }
 
     @PostMapping
-    public Link create(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestBody CreateReq req) {
+    public Link create(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestBody LinkRequest req) {
         User u = userService.findByUsername(principal.getUsername());
         return linkService.create(u.getId(), req.getCategoryId(), req.getTitle(), req.getUrl(), req.getRemark(), req.getIcon(), req.getOrderIndex());
     }
@@ -40,17 +40,8 @@ public class LinkController {
     }
     
     @PutMapping("/{id}")
-    public Link update(@PathVariable Long id, @RequestBody CreateReq req) {
+    public Link update(@PathVariable Long id, @RequestBody LinkRequest req) {
         return linkService.update(id, req.getCategoryId(), req.getTitle(), req.getUrl(), req.getRemark(), req.getIcon(), req.getOrderIndex());
     }
 
-    @Data
-    public static class CreateReq {
-        private Long categoryId;
-        private String title;
-        private String url;
-        private String remark;
-        private String icon;
-        private Integer orderIndex;
-    }
 }

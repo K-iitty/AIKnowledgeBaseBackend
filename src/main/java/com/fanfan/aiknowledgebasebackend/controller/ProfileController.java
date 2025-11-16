@@ -1,11 +1,11 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
+import com.fanfan.aiknowledgebasebackend.dto.ProfileItemRequest;
 import com.fanfan.aiknowledgebasebackend.entity.Profile;
 import com.fanfan.aiknowledgebasebackend.entity.ProfileItem;
 import com.fanfan.aiknowledgebasebackend.entity.User;
 import com.fanfan.aiknowledgebasebackend.service.ProfileService;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
-import lombok.Data;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,13 +35,13 @@ public class ProfileController {
     }
 
     @PostMapping("/items")
-    public ProfileItem addItem(@RequestBody ItemReq req) {
+    public ProfileItem addItem(@RequestBody ProfileItemRequest req) {
         return profileService.addItem(req.getProfileId(), req.getType(), req.getTitle(), req.getContent(), 
                 req.getStartDate(), req.getEndDate(), req.getOrderIndex());
     }
     
     @PutMapping("/items/{id}")
-    public ProfileItem updateItem(@PathVariable Long id, @RequestBody ItemReq req) {
+    public ProfileItem updateItem(@PathVariable Long id, @RequestBody ProfileItemRequest req) {
         return profileService.updateItem(id, req.getType(), req.getTitle(), req.getContent(), 
                 req.getStartDate(), req.getEndDate(), req.getOrderIndex());
     }
@@ -56,15 +56,4 @@ public class ProfileController {
         profileService.deleteItem(id);
     }
 
-    @Data
-    public static class ItemReq {
-        private Long profileId;
-        private String type;
-        private String title;
-        private String content;
-        private java.time.LocalDate startDate;
-        private java.time.LocalDate endDate;
-        private Integer orderIndex;
-    }
 }
-

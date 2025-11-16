@@ -1,10 +1,10 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
+import com.fanfan.aiknowledgebasebackend.dto.NoteRequest;
 import com.fanfan.aiknowledgebasebackend.entity.Note;
 import com.fanfan.aiknowledgebasebackend.entity.User;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
 import com.fanfan.aiknowledgebasebackend.service.NoteService;
-import lombok.Data;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -35,7 +35,7 @@ public class NoteController {
     }
 
     @PostMapping
-    public Note create(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestBody CreateReq req) {
+    public Note create(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestBody NoteRequest req) {
         User u = userService.findByUsername(principal.getUsername());
         return noteService.createFromContent(u.getId(), req.getCategoryId(), req.getTitle(), req.getDescription(), req.getContent(), req.getVisibility(), req.getTags(), req.getCoverKey());
     }
@@ -98,7 +98,7 @@ public class NoteController {
     }
 
     @PutMapping("/{id}")
-    public Note update(@PathVariable Long id, @RequestBody CreateReq req) {
+    public Note update(@PathVariable Long id, @RequestBody NoteRequest req) {
         return noteService.update(id, req.getTitle(), req.getDescription(), req.getContent(), req.getTags(), req.getCoverKey(), req.getVisibility());
     }
 
@@ -107,14 +107,4 @@ public class NoteController {
         noteService.like(id);
     }
 
-    @Data
-    public static class CreateReq {
-        private Long categoryId;
-        private String title;
-        private String description;
-        private String content;
-        private String visibility;
-        private String tags;
-        private String coverKey;
-    }
 }
