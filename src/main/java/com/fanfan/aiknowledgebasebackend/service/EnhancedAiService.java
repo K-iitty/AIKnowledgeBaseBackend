@@ -47,9 +47,18 @@ public class EnhancedAiService {
             
             // Add RAG context for local mode
             if ("local".equalsIgnoreCase(mode)) {
-                String ragContext = ragService.getRelevantContext(userId, question, 3);
+                String ragContext = ragService.getCombinedRelevantContext(userId, question, 2);
                 if (!ragContext.isEmpty()) {
-                    messages.add(createMessage("system", "你是知识库助手。基于以下本地笔记内容优先回答用户问题：\n" + ragContext));
+                    String systemPrompt = "你是知识库助手。请严格基于以下本地知识库内容回答用户问题：\n\n" + ragContext + 
+                        "\n\n【重要规则】\n" +
+                        "1. 只使用上述笔记和思维导图中的信息回答\n" +
+                        "2. 如果上述内容中没有相关信息，请明确回复：\"抱歉，在您的本地知识库中暂未找到相关信息。\"\n" +
+                        "3. 不要使用你的通用知识，只使用提供的本地内容\n" +
+                        "4. 回答时可以引用具体的笔记或思维导图标题";
+                    messages.add(createMessage("system", systemPrompt));
+                } else {
+                    // No relevant content found
+                    messages.add(createMessage("system", "在本地知识库中未找到与用户问题相关的内容。请明确告知用户：\"抱歉，在您的本地知识库中暂未找到相关信息。\""));
                 }
             }
 
@@ -98,9 +107,18 @@ public class EnhancedAiService {
             
             // Add RAG context for local mode
             if ("local".equalsIgnoreCase(mode)) {
-                String ragContext = ragService.getRelevantContext(userId, question, 3);
+                String ragContext = ragService.getCombinedRelevantContext(userId, question, 2);
                 if (!ragContext.isEmpty()) {
-                    messages.add(createMessage("system", "你是知识库助手。基于以下本地笔记内容优先回答用户问题：\n" + ragContext));
+                    String systemPrompt = "你是知识库助手。请严格基于以下本地知识库内容回答用户问题：\n\n" + ragContext + 
+                        "\n\n【重要规则】\n" +
+                        "1. 只使用上述笔记和思维导图中的信息回答\n" +
+                        "2. 如果上述内容中没有相关信息，请明确回复：\"抱歉，在您的本地知识库中暂未找到相关信息。\"\n" +
+                        "3. 不要使用你的通用知识，只使用提供的本地内容\n" +
+                        "4. 回答时可以引用具体的笔记或思维导图标题";
+                    messages.add(createMessage("system", systemPrompt));
+                } else {
+                    // No relevant content found
+                    messages.add(createMessage("system", "在本地知识库中未找到与用户问题相关的内容。请明确告知用户：\"抱歉，在您的本地知识库中暂未找到相关信息。\""));
                 }
             }
 
@@ -297,6 +315,7 @@ public class EnhancedAiService {
      */
     public void rebuildUserRagIndex(Long userId) {
         ragService.buildUserIndex(userId);
+        ragService.buildUserMindmapIndex(userId);
     }
 
     /**
@@ -324,9 +343,18 @@ public class EnhancedAiService {
             
             // Add RAG context for local mode
             if ("local".equalsIgnoreCase(mode)) {
-                String ragContext = ragService.getRelevantContext(userId, question, 3);
+                String ragContext = ragService.getCombinedRelevantContext(userId, question, 2);
                 if (!ragContext.isEmpty()) {
-                    messages.add(createMessage("system", "你是知识库助手。基于以下本地笔记内容优先回答用户问题：\n" + ragContext));
+                    String systemPrompt = "你是知识库助手。请严格基于以下本地知识库内容回答用户问题：\n\n" + ragContext + 
+                        "\n\n【重要规则】\n" +
+                        "1. 只使用上述笔记和思维导图中的信息回答\n" +
+                        "2. 如果上述内容中没有相关信息，请明确回复：\"抱歉，在您的本地知识库中暂未找到相关信息。\"\n" +
+                        "3. 不要使用你的通用知识，只使用提供的本地内容\n" +
+                        "4. 回答时可以引用具体的笔记或思维导图标题";
+                    messages.add(createMessage("system", systemPrompt));
+                } else {
+                    // No relevant content found
+                    messages.add(createMessage("system", "在本地知识库中未找到与用户问题相关的内容。请明确告知用户：\"抱歉，在您的本地知识库中暂未找到相关信息。\""));
                 }
             }
 
