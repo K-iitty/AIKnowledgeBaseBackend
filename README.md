@@ -1,6 +1,7 @@
-# 🧠 AI 知识库管理系统
+# AI 知识库管理系统
 
-<div align="center">
+
+
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-brightgreen.svg)
@@ -16,9 +17,9 @@
 - 前端：[K-iitty/AIKnowledgeBaseFrontend: 智能问答知识库](https://github.com/K-iitty/AIKnowledgeBaseFrontend)
 - 后端：[K-iitty/AIKnowledgeBaseBackend: 智能问答知识库](https://github.com/K-iitty/AIKnowledgeBaseBackend)
 
-## ✨ 功能特性
+##  功能特性
 
-### 🤖 AI 智能助手
+### AI 智能助手
 
 - **智能对话**：集成阿里云通义千问大模型
 - **RAG 检索增强**：基于本地知识库的智能问答
@@ -27,7 +28,7 @@
 - **智能摘要**：自动生成内容摘要
 - **上下文记忆**：支持多轮对话上下文
 
-### 📝 笔记管理
+### 笔记管理
 
 - **Markdown 编辑器**：支持实时预览、语法高亮
 - **分类管理**：树形分类结构，支持拖拽排序
@@ -36,27 +37,26 @@
 - **导出功能**：支持导出为 Markdown 或 PDF
 - **封面设置**：自定义笔记封面图片
 
-### 🗺️ 思维导图
+### 思维导图
 - **可视化编辑**：基于 jsMind 的交互式思维导图编辑器
 - **节点管理**：支持添加、编辑、删除节点
 - **节点备注**：为每个节点添加详细备注
 - **导入导出**：支持 XMind 格式导入导出
 
-### 🔗 链接收藏
+### 链接收藏
 - **网址管理**：收藏常用网站链接
 - **分类整理**：按类别组织链接
 - **图标显示**：自动获取网站图标
 - **快速访问**：一键跳转到收藏网站
 
-### 🔐 用户系统
+### 用户系统
 - **用户注册/登录**：JWT Token 认证
+- **滑动验证码**：集成 AJ-Captcha 滑块拼图验证，防止暴力破解
 - **权限管理**：基于 Spring Security 的权限控制
 - **个人中心**：用户信息管理
 - **数据隔离**：用户数据完全隔离
 
----
-
-## 🛠️ 技术栈
+## 技术栈
 
 ### 后端技术
 | 技术 | 版本 | 说明 |
@@ -72,6 +72,7 @@
 | PDFBox | 2.0.30 | PDF 处理 |
 | Knife4j | 4.4.0 | API 文档 |
 | Lombok | 1.18.32 | 代码简化 |
+| AJ-Captcha | 1.3.0 | 滑动验证码 |
 
 ### 前端技术
 | 技术 | 版本 | 说明 |
@@ -84,9 +85,7 @@
 | jsMind | 0.8.5 | 思维导图库 |
 | Vite | 5.4.10 | 构建工具 |
 
----
-
-## 🚀 快速开始
+## 快速开始
 
 ### 环境要求
 
@@ -131,6 +130,15 @@ spring:
   ai:
     dashscope:
       api-key: your_dashscope_api_key  # 阿里云通义千问 API Key
+
+# AJ-Captcha 验证码配置
+aj:
+  captcha:
+    type: blockPuzzle          # 验证码类型：滑块拼图
+    cache-type: redis          # 缓存类型：Redis
+    expire-seconds: 120        # 验证码有效期（秒）
+    slip-offset: 5             # 滑动误差允许范围（像素）
+    aes-status: false          # AES 加密状态
 
 aliyun:
   oss:
@@ -192,9 +200,9 @@ npm run dev
 npm run build
 ```
 
----
-
 ## 页面
+
+![PixPin_2025-11-17_13-17-43](./assets/PixPin_2025-11-17_13-17-43.png)
 
 
 
@@ -212,7 +220,7 @@ npm run build
 
 ![PixPin_2025-11-16_22-27-40](./assets/PixPin_2025-11-16_22-27-40.png)
 
-## 📁 项目结构
+##  项目结构
 
 ### 后端结构
 
@@ -220,6 +228,7 @@ npm run build
 AIKnowledgeBaseBackend/
 ├── src/main/java/com/fanfan/aiknowledgebasebackend/
 │   ├── config/              # 配置类
+│   │   ├── CaptchaConfig.java        # 验证码配置
 │   │   ├── CorsConfig.java           # 跨域配置
 │   │   ├── JwtAuthenticationFilter.java  # JWT 过滤器
 │   │   ├── OssConfig.java            # OSS 配置
@@ -282,6 +291,7 @@ AIKnowledgeBaseFrontend/
 │   │   └── styles/          # 样式文件
 │   │
 │   ├── components/          # 组件
+│   │   ├── Captcha.vue           # 滑动验证码组件
 │   │   ├── MarkdownEditor.vue    # Markdown 编辑器
 │   │   ├── MindMapEditor.vue     # 思维导图编辑器
 │   │   ├── ChatWindow.vue        # AI 聊天窗口
@@ -318,7 +328,7 @@ AIKnowledgeBaseFrontend/
 
 ---
 
-## 📡 API 文档
+## API 文档
 
 ### 访问 Swagger UI
 
@@ -364,9 +374,20 @@ AIKnowledgeBaseFrontend/
 - **知识库增强**：可选择基于本地知识库的问答
 - **会话管理**：支持创建、切换、删除会话
 
+### 5. 滑动验证码系统
+
+基于 AJ-Captcha 实现的安全验证系统：
+
+- **滑块拼图验证**：用户需拖动滑块完成拼图验证
+- **Redis 缓存**：验证码数据存储在 Redis 中，提高性能
+- **自动过期**：验证码 120 秒后自动失效
+- **防暴力破解**：有效防止机器人暴力破解登录
+- **友好交互**：支持鼠标拖拽和移动端触摸操作
+- **失败重试**：验证失败自动刷新验证码
+
 ---
 
-## 🔧 配置说明
+##  配置说明
 
 ### 必需配置
 
@@ -399,7 +420,7 @@ AIKnowledgeBaseFrontend/
 - **Token 过期时间**：默认 7 天
 - **AI 模型参数**：temperature、model 等
 
-## 📝 开发规范
+## 开发规范
 
 ### 代码规范
 
@@ -408,28 +429,19 @@ AIKnowledgeBaseFrontend/
 - **命名**：使用有意义的变量名和函数名
 - **注释**：关键逻辑添加注释说明
 
-## 📄 License
+## License
 
 本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
 
----
-
-## 👥 贡献
+##  贡献
 
 欢迎提交 Issue 和 Pull Request！
 
----
-
-## 📧 联系方式
+##  联系方式
 
 如有问题或建议，请通过以下方式联系：
 
 - 提交 Issue
 
----
-
-<div align="center">
-
 **⭐ 如果这个项目对你有帮助，请给一个 Star！⭐**
-
 

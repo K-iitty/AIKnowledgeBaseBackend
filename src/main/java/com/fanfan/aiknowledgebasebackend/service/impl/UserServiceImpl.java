@@ -1,5 +1,8 @@
 package com.fanfan.aiknowledgebasebackend.service.impl;
 
+import com.anji.captcha.model.common.ResponseModel;
+import com.anji.captcha.model.vo.CaptchaVO;
+import com.anji.captcha.service.CaptchaService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fanfan.aiknowledgebasebackend.entity.User;
 import com.fanfan.aiknowledgebasebackend.mapper.UserMapper;
@@ -16,11 +19,13 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final CaptchaService captchaService;
 
-    public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, CaptchaService captchaService) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.captchaService = captchaService;
     }
 
     @Override
@@ -58,7 +63,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String login(String username, String rawPassword) {
+    public String login(String username, String rawPassword, String captchaVerification) {
+        // 验证验证码
+        CaptchaVO captchaVO = new CaptchaVO();
+        captchaVO.setCaptchaVerification(captchaVerification);
+        ResponseModel response = captchaService.verification(captchaVO);
+        if (!response.isSuccess()) {
+            throw new RuntimeException("验证码校验失败");
+        }
+        
         User user = findByUsername(username);
         if (user == null || !passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
             throw new RuntimeException("账号或密码错误");

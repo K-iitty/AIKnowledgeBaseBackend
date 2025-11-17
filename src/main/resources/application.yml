@@ -86,3 +86,32 @@ jwt:
 
 file:
   upload-path: uploads/knowledge
+
+# AJ-Captcha 验证码配置
+aj:
+  captcha:
+    # 验证码类型 default-默认 blockPuzzle-滑块拼图 clickWord-文字点选
+    type: blockPuzzle
+    # 缓存类型 local-本地 redis-redis
+    cache-type: redis
+    # 滑块拼图底图路径，不配置将使用默认图片
+    # jigsaw: classpath:images/jigsaw
+    # 滑块拼图干扰图路径，不配置将使用默认图片
+    # pic-click: classpath:images/pic-click
+    # 验证码有效时间(秒)
+    expire-seconds: 120
+    # 滑动验证，底图路径，不配置将使用默认图片
+    # water-mark: 我的水印
+    # 滑动干扰项(0/1/2)
+    interference-options: 2
+    # 点选文字验证码的文字字体
+    # font-type: WenQuanZhengHei.ttf
+    # 校验滑动拼图允许误差偏移量(默认5像素)
+    slip-offset: 5
+    # aes加密坐标开启或者禁用(true|false)
+    aes-status: false
+    # 点选字体样式
+    font-style: 1
+    # 验证码文字生成策略
+    # 默认两种 random-随机 fixed-固定
+    click-word-captcha-type: random
