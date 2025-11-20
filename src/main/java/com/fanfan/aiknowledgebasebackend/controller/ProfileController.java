@@ -1,9 +1,9 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
-import com.fanfan.aiknowledgebasebackend.dto.ProfileItemRequest;
-import com.fanfan.aiknowledgebasebackend.entity.Profile;
-import com.fanfan.aiknowledgebasebackend.entity.ProfileItem;
-import com.fanfan.aiknowledgebasebackend.entity.User;
+import com.fanfan.aiknowledgebasebackend.domain.dto.ProfileItemRequest;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Profile;
+import com.fanfan.aiknowledgebasebackend.domain.entity.ProfileItem;
+import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.service.ProfileService;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

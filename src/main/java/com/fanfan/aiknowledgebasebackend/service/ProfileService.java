@@ -1,7 +1,7 @@
 package com.fanfan.aiknowledgebasebackend.service;
 
-import com.fanfan.aiknowledgebasebackend.entity.Profile;
-import com.fanfan.aiknowledgebasebackend.entity.ProfileItem;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Profile;
+import com.fanfan.aiknowledgebasebackend.domain.entity.ProfileItem;
 
 import java.time.LocalDate;
 import java.util.List;

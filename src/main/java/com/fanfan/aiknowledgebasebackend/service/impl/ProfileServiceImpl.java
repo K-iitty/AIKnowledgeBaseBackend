@@ -1,8 +1,8 @@
 package com.fanfan.aiknowledgebasebackend.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fanfan.aiknowledgebasebackend.entity.Profile;
-import com.fanfan.aiknowledgebasebackend.entity.ProfileItem;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Profile;
+import com.fanfan.aiknowledgebasebackend.domain.entity.ProfileItem;
 import com.fanfan.aiknowledgebasebackend.mapper.ProfileItemMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.ProfileMapper;
 import com.fanfan.aiknowledgebasebackend.service.ProfileService;

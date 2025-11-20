@@ -1,10 +1,10 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
-import com.fanfan.aiknowledgebasebackend.dto.*;
-import com.fanfan.aiknowledgebasebackend.entity.Mindmap;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapResource;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapTag;
-import com.fanfan.aiknowledgebasebackend.entity.User;
+import com.fanfan.aiknowledgebasebackend.domain.dto.*;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Mindmap;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapResource;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapTag;
+import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.service.MindmapService;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

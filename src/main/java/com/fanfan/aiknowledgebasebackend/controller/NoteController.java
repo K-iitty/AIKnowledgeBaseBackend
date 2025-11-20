@@ -1,14 +1,10 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
-import com.fanfan.aiknowledgebasebackend.dto.NoteRequest;
-import com.fanfan.aiknowledgebasebackend.entity.Note;
-import com.fanfan.aiknowledgebasebackend.entity.User;
+import com.fanfan.aiknowledgebasebackend.domain.dto.NoteRequest;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Note;
+import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
 import com.fanfan.aiknowledgebasebackend.service.NoteService;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +13,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;

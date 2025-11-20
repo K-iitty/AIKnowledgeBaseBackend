@@ -1,10 +1,10 @@
 package com.fanfan.aiknowledgebasebackend.service;
 
-import com.fanfan.aiknowledgebasebackend.entity.ChatMessage;
-import com.fanfan.aiknowledgebasebackend.entity.ChatSession;
+import com.fanfan.aiknowledgebasebackend.domain.entity.ChatMessage;
+import com.fanfan.aiknowledgebasebackend.domain.entity.ChatSession;
 import com.fanfan.aiknowledgebasebackend.mapper.ChatMessageMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.ChatSessionMapper;
-import com.fanfan.aiknowledgebasebackend.config.AiConfig;
+import com.fanfan.aiknowledgebasebackend.common.config.AiConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

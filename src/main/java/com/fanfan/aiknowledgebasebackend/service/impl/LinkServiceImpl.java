@@ -1,7 +1,7 @@
 package com.fanfan.aiknowledgebasebackend.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fanfan.aiknowledgebasebackend.entity.Link;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Link;
 import com.fanfan.aiknowledgebasebackend.mapper.LinkMapper;
 import com.fanfan.aiknowledgebasebackend.service.LinkService;
 import org.springframework.stereotype.Service;

@@ -1,8 +1,8 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
-import com.fanfan.aiknowledgebasebackend.dto.LinkRequest;
-import com.fanfan.aiknowledgebasebackend.entity.Link;
-import com.fanfan.aiknowledgebasebackend.entity.User;
+import com.fanfan.aiknowledgebasebackend.domain.dto.LinkRequest;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Link;
+import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.service.LinkService;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

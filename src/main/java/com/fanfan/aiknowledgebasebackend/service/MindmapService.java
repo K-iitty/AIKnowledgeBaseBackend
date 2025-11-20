@@ -1,9 +1,8 @@
 package com.fanfan.aiknowledgebasebackend.service;
 
-import com.fanfan.aiknowledgebasebackend.entity.Mindmap;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapResource;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapTag;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapTagRelation;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Mindmap;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapResource;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapTag;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

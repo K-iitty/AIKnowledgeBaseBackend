@@ -1,6 +1,6 @@
 package com.fanfan.aiknowledgebasebackend.service;
 
-import com.fanfan.aiknowledgebasebackend.entity.MindmapResource;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapResource;
 
 import java.util.List;
 

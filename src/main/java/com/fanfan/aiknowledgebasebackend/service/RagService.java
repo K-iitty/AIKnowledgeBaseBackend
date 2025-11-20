@@ -1,9 +1,9 @@
 package com.fanfan.aiknowledgebasebackend.service;
 
-import com.fanfan.aiknowledgebasebackend.entity.Note;
-import com.fanfan.aiknowledgebasebackend.entity.NoteCategory;
-import com.fanfan.aiknowledgebasebackend.entity.Mindmap;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapCategory;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Note;
+import com.fanfan.aiknowledgebasebackend.domain.entity.NoteCategory;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Mindmap;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapCategory;
 import com.fanfan.aiknowledgebasebackend.mapper.NoteCategoryMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.MindmapMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.MindmapCategoryMapper;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 @Service
 public class RagService {

@@ -1,10 +1,10 @@
 package com.fanfan.aiknowledgebasebackend.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fanfan.aiknowledgebasebackend.entity.Mindmap;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapResource;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapTag;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapTagRelation;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Mindmap;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapResource;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapTag;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapTagRelation;
 import com.fanfan.aiknowledgebasebackend.mapper.MindmapMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.MindmapResourceMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.MindmapTagMapper;
@@ -17,10 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 @Service
 public class MindmapServiceImpl implements MindmapService {

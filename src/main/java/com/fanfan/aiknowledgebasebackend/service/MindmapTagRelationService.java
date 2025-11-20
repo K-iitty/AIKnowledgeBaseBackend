@@ -1,6 +1,6 @@
 package com.fanfan.aiknowledgebasebackend.service;
 
-import com.fanfan.aiknowledgebasebackend.entity.MindmapTagRelation;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapTagRelation;
 
 import java.util.List;
 

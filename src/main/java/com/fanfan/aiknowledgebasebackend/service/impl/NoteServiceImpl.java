@@ -1,7 +1,7 @@
 package com.fanfan.aiknowledgebasebackend.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fanfan.aiknowledgebasebackend.entity.Note;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Note;
 import com.fanfan.aiknowledgebasebackend.mapper.NoteMapper;
 import com.fanfan.aiknowledgebasebackend.service.NoteService;
 import com.fanfan.aiknowledgebasebackend.service.OssService;
@@ -9,9 +9,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.commonmark.node.Node;
-import org.commonmark.parser.Parser;
-import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 

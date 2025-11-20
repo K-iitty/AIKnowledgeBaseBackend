@@ -1,10 +1,6 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -13,14 +9,13 @@ import java.util.List;
 import java.util.Map;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fanfan.aiknowledgebasebackend.dto.ChatRequest;
-import com.fanfan.aiknowledgebasebackend.dto.ChatSessionRequest;
-import com.fanfan.aiknowledgebasebackend.dto.PolishRequest;
-import com.fanfan.aiknowledgebasebackend.dto.SummaryRequest;
-import com.fanfan.aiknowledgebasebackend.entity.ChatMessage;
-import com.fanfan.aiknowledgebasebackend.entity.ChatSession;
-import com.fanfan.aiknowledgebasebackend.entity.Note;
-import com.fanfan.aiknowledgebasebackend.entity.User;
+import com.fanfan.aiknowledgebasebackend.domain.dto.ChatRequest;
+import com.fanfan.aiknowledgebasebackend.domain.dto.ChatSessionRequest;
+import com.fanfan.aiknowledgebasebackend.domain.dto.PolishRequest;
+import com.fanfan.aiknowledgebasebackend.domain.dto.SummaryRequest;
+import com.fanfan.aiknowledgebasebackend.domain.entity.ChatMessage;
+import com.fanfan.aiknowledgebasebackend.domain.entity.ChatSession;
+import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.mapper.ChatMessageMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.ChatSessionMapper;
 import com.fanfan.aiknowledgebasebackend.service.NoteService;

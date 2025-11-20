@@ -4,10 +4,10 @@ import com.anji.captcha.model.common.ResponseModel;
 import com.anji.captcha.model.vo.CaptchaVO;
 import com.anji.captcha.service.CaptchaService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fanfan.aiknowledgebasebackend.entity.User;
+import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.mapper.UserMapper;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
-import com.fanfan.aiknowledgebasebackend.util.JwtUtil;
+import com.fanfan.aiknowledgebasebackend.common.util.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

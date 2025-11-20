@@ -2,7 +2,7 @@ package com.fanfan.aiknowledgebasebackend.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapResource;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapResource;
 import com.fanfan.aiknowledgebasebackend.mapper.MindmapResourceMapper;
 import com.fanfan.aiknowledgebasebackend.service.MindmapResourceService;
 import org.springframework.stereotype.Service;

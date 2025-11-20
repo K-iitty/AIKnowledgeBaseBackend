@@ -1,15 +1,15 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fanfan.aiknowledgebasebackend.dto.BatchDeleteRequest;
-import com.fanfan.aiknowledgebasebackend.dto.CategoryRequest;
-import com.fanfan.aiknowledgebasebackend.dto.CatReq;
-import com.fanfan.aiknowledgebasebackend.entity.LinkCategory;
-import com.fanfan.aiknowledgebasebackend.entity.Mindmap;
-import com.fanfan.aiknowledgebasebackend.entity.MindmapCategory;
-import com.fanfan.aiknowledgebasebackend.entity.Note;
-import com.fanfan.aiknowledgebasebackend.entity.NoteCategory;
-import com.fanfan.aiknowledgebasebackend.entity.User;
+import com.fanfan.aiknowledgebasebackend.domain.dto.BatchDeleteRequest;
+import com.fanfan.aiknowledgebasebackend.domain.dto.CategoryRequest;
+import com.fanfan.aiknowledgebasebackend.domain.dto.CatReq;
+import com.fanfan.aiknowledgebasebackend.domain.entity.LinkCategory;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Mindmap;
+import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapCategory;
+import com.fanfan.aiknowledgebasebackend.domain.entity.Note;
+import com.fanfan.aiknowledgebasebackend.domain.entity.NoteCategory;
+import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.mapper.LinkCategoryMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.MindmapCategoryMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.MindmapMapper;
