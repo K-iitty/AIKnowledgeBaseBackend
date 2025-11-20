@@ -10,6 +10,7 @@ import java.util.List;
 public interface MindmapService {
     Mindmap create(Long userId, Long categoryId, String title, String description, String coverKey, String visibility);
     Mindmap importFile(Long userId, Long categoryId, MultipartFile file, String visibility);
+    Mindmap importFromJson(Long userId, Long categoryId, String title, String content, Integer nodeCount, String visibility);
     void delete(Long id);
     List<Mindmap> search(Long userId, String keyword, Long categoryId);
     Mindmap update(Long id, String title, String description, String coverKey, String visibility);

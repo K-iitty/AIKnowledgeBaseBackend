@@ -245,21 +245,31 @@ public class AiController {
         }
         new Thread(() -> {
             try {
+                System.out.println("开始流式传输 - SessionId: " + sessionId + ", Question: " + q);
+                final java.util.concurrent.atomic.AtomicInteger chunkCount = new java.util.concurrent.atomic.AtomicInteger(0);
+                
                 // Use enhanced AI service for real streaming with callback
                 enhancedAiService.streamChatWithMemoryRealtime(
                     u.getId(), sessionId, q, mode, categoryId,
                     chunk -> {
                         try {
+                            int count = chunkCount.incrementAndGet();
+                            System.out.println("发送数据块 #" + count + ": " + chunk.substring(0, Math.min(50, chunk.length())));
                             emitter.send(SseEmitter.event().data(chunk));
                         } catch (Exception e) {
+                            System.err.println("发送流式数据失败: " + e.getMessage());
                             throw new RuntimeException("发送流式数据失败", e);
                         }
                     }
                 );
                 
+                System.out.println("流式传输完成，共发送 " + chunkCount.get() + " 个数据块，发送[DONE]标记");
                 emitter.send(SseEmitter.event().data("[DONE]"));
                 emitter.complete();
+                System.out.println("SSE连接已完成");
             } catch (Exception e) { 
+                System.err.println("流式传输异常: " + e.getMessage());
+                e.printStackTrace();
                 try { 
                     String errorMsg = "{"+"\"error\":\"AI服务错误: " + e.getMessage().replace("\"", "\\\"") + "\"}";
                     emitter.send(SseEmitter.event().data(errorMsg)); 

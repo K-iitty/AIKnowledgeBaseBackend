@@ -45,9 +45,12 @@ public class EnhancedAiService {
             // Build conversation context
             List<Map<String, String>> messages = getOrCreateConversationMemory(sessionId);
             
+            // Remove old system prompts to avoid mode conflicts
+            messages.removeIf(msg -> "system".equals(msg.get("role")));
+            
             // Add RAG context for local mode
             if ("local".equalsIgnoreCase(mode)) {
-                String ragContext = ragService.getCombinedRelevantContext(userId, question, 2);
+                String ragContext = ragService.getCombinedRelevantContext(userId, question, 5);
                 if (!ragContext.isEmpty()) {
                     String systemPrompt = "你是知识库助手。请严格基于以下本地知识库内容回答用户问题：\n\n" + ragContext + 
                         "\n\n【重要规则】\n" +
@@ -60,6 +63,9 @@ public class EnhancedAiService {
                     // No relevant content found
                     messages.add(createMessage("system", "在本地知识库中未找到与用户问题相关的内容。请明确告知用户：\"抱歉，在您的本地知识库中暂未找到相关信息。\""));
                 }
+            } else {
+                // Default mode: General assistant with Markdown formatting
+                messages.add(createMessage("system", "你是一个全能的助手，请始终使用Markdown格式进行回复，以便于阅读。例如，使用标题、列表、代码块等来组织内容。"));
             }
 
             // Add user message
@@ -105,9 +111,12 @@ public class EnhancedAiService {
             // Build conversation context
             List<Map<String, String>> messages = getOrCreateConversationMemory(sessionId);
             
+            // Remove old system prompts to avoid mode conflicts
+            messages.removeIf(msg -> "system".equals(msg.get("role")));
+            
             // Add RAG context for local mode
             if ("local".equalsIgnoreCase(mode)) {
-                String ragContext = ragService.getCombinedRelevantContext(userId, question, 2);
+                String ragContext = ragService.getCombinedRelevantContext(userId, question, 5);
                 if (!ragContext.isEmpty()) {
                     String systemPrompt = "你是知识库助手。请严格基于以下本地知识库内容回答用户问题：\n\n" + ragContext + 
                         "\n\n【重要规则】\n" +
@@ -120,6 +129,9 @@ public class EnhancedAiService {
                     // No relevant content found
                     messages.add(createMessage("system", "在本地知识库中未找到与用户问题相关的内容。请明确告知用户：\"抱歉，在您的本地知识库中暂未找到相关信息。\""));
                 }
+            } else {
+                // Default mode: General assistant with Markdown formatting
+                messages.add(createMessage("system", "你是一个全能的助手，请始终使用Markdown格式进行回复，以便于阅读。例如，使用标题、列表、代码块等来组织内容。"));
             }
 
             // Add user message
@@ -341,21 +353,28 @@ public class EnhancedAiService {
             // Build conversation context
             List<Map<String, String>> messages = getOrCreateConversationMemory(sessionId);
             
+            // Remove old system prompts to avoid mode conflicts
+            messages.removeIf(msg -> "system".equals(msg.get("role")));
+            
             // Add RAG context for local mode
             if ("local".equalsIgnoreCase(mode)) {
-                String ragContext = ragService.getCombinedRelevantContext(userId, question, 2);
+                String ragContext = ragService.getCombinedRelevantContext(userId, question, 5);
                 if (!ragContext.isEmpty()) {
                     String systemPrompt = "你是知识库助手。请严格基于以下本地知识库内容回答用户问题：\n\n" + ragContext + 
                         "\n\n【重要规则】\n" +
                         "1. 只使用上述笔记和思维导图中的信息回答\n" +
                         "2. 如果上述内容中没有相关信息，请明确回复：\"抱歉，在您的本地知识库中暂未找到相关信息。\"\n" +
                         "3. 不要使用你的通用知识，只使用提供的本地内容\n" +
-                        "4. 回答时可以引用具体的笔记或思维导图标题";
+                        "4. 回答时可以引用具体的笔记或思维导图标题\n" +
+                        "5. 你的回复必须使用Markdown格式进行排版。";
                     messages.add(createMessage("system", systemPrompt));
                 } else {
                     // No relevant content found
                     messages.add(createMessage("system", "在本地知识库中未找到与用户问题相关的内容。请明确告知用户：\"抱歉，在您的本地知识库中暂未找到相关信息。\""));
                 }
+            } else {
+                // Default mode: General assistant with Markdown formatting
+                messages.add(createMessage("system", "你是一个全能的助手，请始终使用Markdown格式进行回复，以便于阅读。例如，使用标题、列表、代码块等来组织内容。"));
             }
 
             // Add user message

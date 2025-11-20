@@ -11,6 +11,8 @@ import com.fanfan.aiknowledgebasebackend.mapper.MindmapTagMapper;
 import com.fanfan.aiknowledgebasebackend.mapper.MindmapTagRelationMapper;
 import com.fanfan.aiknowledgebasebackend.service.MindmapService;
 import com.fanfan.aiknowledgebasebackend.service.OssService;
+import com.fanfan.aiknowledgebasebackend.service.XMindParserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +20,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class MindmapServiceImpl implements MindmapService {
@@ -27,17 +30,21 @@ public class MindmapServiceImpl implements MindmapService {
     private final MindmapTagMapper mindmapTagMapper;
     private final MindmapTagRelationMapper mindmapTagRelationMapper;
     private final OssService ossService;
+    private final XMindParserService xMindParserService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public MindmapServiceImpl(MindmapMapper mindmapMapper, 
                               MindmapResourceMapper mindmapResourceMapper,
                               MindmapTagMapper mindmapTagMapper,
                               MindmapTagRelationMapper mindmapTagRelationMapper,
-                              OssService ossService) {
+                              OssService ossService,
+                              XMindParserService xMindParserService) {
         this.mindmapMapper = mindmapMapper;
         this.mindmapResourceMapper = mindmapResourceMapper;
         this.mindmapTagMapper = mindmapTagMapper;
         this.mindmapTagRelationMapper = mindmapTagRelationMapper;
         this.ossService = ossService;
+        this.xMindParserService = xMindParserService;
     }
 
     @Override
@@ -68,58 +75,73 @@ public class MindmapServiceImpl implements MindmapService {
 
     @Override
     public Mindmap importFile(Long userId, Long categoryId, MultipartFile file, String visibility) {
-        String objectKey = ossService.upload("mindmaps", file);
-        String title = file.getOriginalFilename();
-        if (title == null) title = "思维导图";
-        
-        // 解析思维导图文件，提取节点数量
-        int nodeCount = 0;
-        String description = title;
-        
         try {
-            String content = new String(file.getBytes(), StandardCharsets.UTF_8);
-            // 简单的节点计数，实际项目中应该使用专业的思维导图解析库
-            nodeCount = countNodes(content);
+            // 上传原始文件到OSS
+            String objectKey = ossService.upload("mindmaps", file);
             
-            // 提取描述信息
-            if (content.length() > 0) {
-                String[] lines = content.split("\n");
-                if (lines.length > 0) {
-                    description = lines[0].trim();
-                    if (description.length() > 100) {
-                        description = description.substring(0, 100) + "...";
-                    }
-                }
+            // 获取文件名和格式
+            String fileName = file.getOriginalFilename();
+            if (fileName == null) fileName = "思维导图.xmind";
+            
+            String format = "xmind";
+            if (fileName.contains(".")) {
+                format = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
             }
-        } catch (IOException e) {
-            // 如果无法读取内容，使用文件名作为描述
+            
+            // 解析XMind文件
+            Map<String, Object> mindmapData = null;
+            int nodeCount = 0;
+            String description = fileName;
+            String contentJson = null;
+            
+            if ("xmind".equals(format)) {
+                try {
+                    // 使用XMindParserService解析XMind文件
+                    mindmapData = xMindParserService.parseXMindFile(file);
+                    
+                    // 统计节点数量
+                    nodeCount = xMindParserService.countNodes(mindmapData);
+                    
+                    // 提取描述
+                    description = xMindParserService.extractDescription(mindmapData);
+                    
+                    // 转换为JSON字符串
+                    contentJson = objectMapper.writeValueAsString(mindmapData);
+                    
+                } catch (Exception e) {
+                    System.err.println("解析XMind文件失败: " + e.getMessage());
+                    // 如果解析失败，使用默认内容
+                    contentJson = createDefaultMindmapContent(fileName.replace(".xmind", ""));
+                    nodeCount = 3;
+                }
+            } else {
+                // 其他格式使用默认内容
+                contentJson = createDefaultMindmapContent(fileName);
+                nodeCount = 3;
+            }
+            
+            // 创建思维导图记录
+            Mindmap m = new Mindmap();
+            m.setUserId(userId);
+            m.setCategoryId(categoryId);
+            m.setTitle(fileName.replace(".xmind", "").replace(".mmap", ""));
+            m.setDescription(description);
+            m.setOssKey(objectKey);
+            m.setFormat(format);
+            m.setVisibility(visibility != null ? visibility : "private");
+            m.setNodeCount(nodeCount);
+            m.setContent(contentJson);
+            m.setLikes(0);
+            m.setViews(0);
+            m.setCreatedAt(LocalDateTime.now());
+            m.setUpdatedAt(LocalDateTime.now());
+            
+            mindmapMapper.insert(m);
+            return m;
+            
+        } catch (Exception e) {
+            throw new RuntimeException("导入思维导图失败: " + e.getMessage(), e);
         }
-        
-        Mindmap m = new Mindmap();
-        m.setUserId(userId);
-        m.setCategoryId(categoryId);
-        m.setTitle(title);
-        m.setDescription(description);
-        m.setOssKey(objectKey); // 正确设置ossKey
-        String format = "xmind";
-        String name = file.getOriginalFilename();
-        if (name != null && name.contains(".")) {
-            format = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
-        }
-        // 支持mmap和xmind格式
-        if ("mmap".equals(format)) {
-            m.setFormat("mmap");
-        } else {
-            m.setFormat("xmind");
-        }
-        m.setVisibility(visibility);
-        m.setNodeCount(nodeCount);
-        m.setLikes(0);
-        m.setViews(0);
-        m.setCreatedAt(LocalDateTime.now());
-        m.setUpdatedAt(LocalDateTime.now());
-        mindmapMapper.insert(m);
-        return m;
     }
     
     private int countNodes(String content) {
@@ -133,6 +155,33 @@ public class MindmapServiceImpl implements MindmapService {
             }
         }
         return Math.max(count, 1);
+    }
+
+    @Override
+    public Mindmap importFromJson(Long userId, Long categoryId, String title, String content, Integer nodeCount, String visibility) {
+        try {
+            Mindmap m = new Mindmap();
+            m.setUserId(userId);
+            m.setCategoryId(categoryId);
+            m.setTitle(title != null && !title.isEmpty() ? title : "思维导图");
+            m.setDescription(title);
+            m.setOssKey(""); // 前端解析的不需要OSS存储
+            m.setFormat("xmind");
+            m.setVisibility(visibility != null ? visibility : "private");
+            m.setNodeCount(nodeCount != null ? nodeCount : 1);
+            m.setContent(content);
+            m.setLikes(0);
+            m.setViews(0);
+            m.setCreatedAt(LocalDateTime.now());
+            m.setUpdatedAt(LocalDateTime.now());
+            
+            mindmapMapper.insert(m);
+            System.out.println("导入思维导图成功: " + m.getTitle() + ", 节点数: " + nodeCount);
+            return m;
+            
+        } catch (Exception e) {
+            throw new RuntimeException("导入思维导图失败: " + e.getMessage(), e);
+        }
     }
 
     @Override
