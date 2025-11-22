@@ -323,11 +323,10 @@ public class EnhancedAiService {
     }
 
     /**
-     * Rebuild RAG index for user
+     * Rebuild RAG index for user (异步执行)
      */
     public void rebuildUserRagIndex(Long userId) {
-        ragService.buildUserIndex(userId);
-        ragService.buildUserMindmapIndex(userId);
+        ragService.buildUserIndexAsync(userId);
     }
 
     /**

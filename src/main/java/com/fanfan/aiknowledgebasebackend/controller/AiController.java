@@ -287,7 +287,8 @@ public class AiController {
             User u = userService.findByUsername(principal.getUsername());
             enhancedAiService.rebuildUserRagIndex(u.getId());
             result.put("success", true);
-            result.put("message", "RAG索引重建成功");
+            result.put("message", "RAG索引重建任务已提交，正在后台异步执行");
+            result.put("async", true);
         } catch (Exception e) {
             result.put("success", false);
             result.put("error", "索引重建失败: " + e.getMessage());

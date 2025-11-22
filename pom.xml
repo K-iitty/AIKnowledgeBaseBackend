@@ -199,6 +199,13 @@
             <version>2.1.4</version>
         </dependency>
         
+        <!-- Guava for RateLimiter -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>32.1.3-jre</version>
+        </dependency>
+        
     </dependencies>
 
     <build>

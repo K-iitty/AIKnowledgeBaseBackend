@@ -11,9 +11,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -256,7 +258,29 @@ public class RagService {
     }
 
     /**
-     * Build or update RAG index for user's notes
+     * 异步构建用户的笔记索引
+     */
+    @Async("ragIndexExecutor")
+    public CompletableFuture<Void> buildUserIndexAsync(Long userId) {
+        try {
+            System.out.println("[异步任务] 开始构建用户 " + userId + " 的索引...");
+            long startTime = System.currentTimeMillis();
+            
+            buildUserIndex(userId);
+            buildUserMindmapIndex(userId);
+            
+            long duration = System.currentTimeMillis() - startTime;
+            System.out.println("[异步任务] 用户 " + userId + " 的索引构建完成，耗时: " + duration + "ms");
+            
+            return CompletableFuture.completedFuture(null);
+        } catch (Exception e) {
+            System.err.println("[异步任务] 构建索引失败: " + e.getMessage());
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+    
+    /**
+     * Build or update RAG index for user's notes (同步方法)
      */
     public void buildUserIndex(Long userId) {
         try {
