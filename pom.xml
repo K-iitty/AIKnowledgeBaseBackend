@@ -166,11 +166,6 @@
             <version>3.0.5</version>
             <scope>test</scope>
         </dependency>
-        <!-- Flyway for database migrations -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-mysql</artifactId>
-        </dependency>
         
         <!-- Spring AI DashScope integration -->
         <dependency>
@@ -228,11 +223,6 @@
                         </exclude>
                     </excludes>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.flywaydb</groupId>
-                <artifactId>flyway-maven-plugin</artifactId>
-                <version>10.15.0</version>
             </plugin>
         </plugins>
     </build>

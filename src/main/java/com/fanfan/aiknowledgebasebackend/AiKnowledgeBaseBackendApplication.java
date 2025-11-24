@@ -8,7 +8,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
-import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 
 @SpringBootApplication
 @MapperScan("com.fanfan.aiknowledgebasebackend.mapper")
@@ -31,14 +30,6 @@ public class AiKnowledgeBaseBackendApplication {
                         .license(new License()
                                 .name("Apache 2.0")
                                 .url("http://springdoc.org")));
-    }
-
-    @Bean
-    public FlywayMigrationStrategy flywayMigrationStrategy() {
-        return flyway -> {
-            try { flyway.repair(); } catch (Exception ignored) {}
-            flyway.migrate();
-        };
     }
 
 }
