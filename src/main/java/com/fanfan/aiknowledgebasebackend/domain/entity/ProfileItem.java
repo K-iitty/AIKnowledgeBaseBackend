@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Data
 @TableName("profile_items")
 public class ProfileItem {
@@ -14,7 +16,7 @@ public class ProfileItem {
     private String type;
     private String title;
     private String content;
-    private java.time.LocalDate startDate;
-    private java.time.LocalDate endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private Integer orderIndex;
 }
