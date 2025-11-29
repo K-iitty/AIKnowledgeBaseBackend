@@ -29,7 +29,6 @@ public class FileController {
         if (url == null || url.isEmpty()) {
             throw new IllegalArgumentException("图片URL不能为空");
         }
-        
         return ossService.downloadAndUpload(url, dir);
     }
 
