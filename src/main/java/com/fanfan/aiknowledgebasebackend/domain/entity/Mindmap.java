@@ -33,4 +33,11 @@ public class Mindmap {
     private String content; // 存储思维导图的JSON格式节点数据
     private String status; // 状态: active/archived/deleted
     private String version; // 版本号
+    
+    // 非数据库字段，用于前端显示
+    @TableField(exist = false)
+    private String categoryName;
+    
+    @TableField(exist = false)
+    private String username;
 }

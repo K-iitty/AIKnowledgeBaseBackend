@@ -1,6 +1,7 @@
 package com.fanfan.aiknowledgebasebackend.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -27,4 +28,11 @@ public class Note {
     private Integer views;
     private Integer wordCount;
     private String content; // 添加内容字段以支持实时编辑
+    
+    // 非数据库字段，用于前端显示
+    @TableField(exist = false)
+    private String categoryName;
+    
+    @TableField(exist = false)
+    private String username;
 }
