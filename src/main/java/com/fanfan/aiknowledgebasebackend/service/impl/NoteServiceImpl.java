@@ -199,13 +199,22 @@ public class NoteServiceImpl implements NoteService {
     public Note getById(Long id) {
         // 优先从缓存获取
         Note note = noteCacheService.getNoteById(id);
-        // 确保内容字段被填充
-        if (note != null && note.getContent() == null) {
-            try {
-                note.setContent(getNoteContent(id));
-            } catch (Exception e) {
-                // 如果获取内容失败，保持content为null
-                note.setContent("");
+        
+        if (note != null) {
+            // 增加浏览量（每次查看都增加）
+            note.setViews(note.getViews() == null ? 1 : note.getViews() + 1);
+            noteMapper.updateById(note);
+            // 删除缓存，确保下次获取到最新的浏览量
+            noteCacheService.deleteNoteCache(id, note.getUserId());
+            
+            // 确保内容字段被填充
+            if (note.getContent() == null) {
+                try {
+                    note.setContent(getNoteContent(id));
+                } catch (Exception e) {
+                    // 如果获取内容失败，保持content为null
+                    note.setContent("");
+                }
             }
         }
         return note;

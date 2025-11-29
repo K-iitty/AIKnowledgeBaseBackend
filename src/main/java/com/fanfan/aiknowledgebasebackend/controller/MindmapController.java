@@ -44,6 +44,11 @@ public class MindmapController {
         return mindmapService.importFromJson(u.getId(), req.getCategoryId(), req.getTitle(), req.getContent(), req.getNodeCount(), req.getVisibility());
     }
 
+    @GetMapping("/{id}")
+    public Mindmap detail(@PathVariable Long id) {
+        return mindmapService.getById(id);
+    }
+
     @GetMapping("/list")
     public List<Mindmap> list(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestParam(required = false) String keyword, @RequestParam(required = false) Long categoryId) {
         User u = userService.findByUsername(principal.getUsername());

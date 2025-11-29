@@ -257,7 +257,13 @@ public class MindmapServiceImpl implements MindmapService {
 
     @Override
     public Mindmap getById(Long id) {
-        return mindmapMapper.selectById(id);
+        Mindmap mindmap = mindmapMapper.selectById(id);
+        if (mindmap != null) {
+            // 增加浏览量（每次查看都增加）
+            mindmap.setViews(mindmap.getViews() == null ? 1 : mindmap.getViews() + 1);
+            mindmapMapper.updateById(mindmap);
+        }
+        return mindmap;
     }
 
     @Override
