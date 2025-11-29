@@ -3,10 +3,7 @@ package com.fanfan.aiknowledgebasebackend.domain.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
-
-import java.util.List;
 
 @Data
 @TableName("note_categories")
@@ -26,8 +23,4 @@ public class NoteCategory {
     private Integer itemCount;
     private String backgroundStyle;
     private String badgeText;
-    
-    // 非数据库字段，用于树形结构
-    @TableField(exist = false)
-    private List<NoteCategory> children;
 }

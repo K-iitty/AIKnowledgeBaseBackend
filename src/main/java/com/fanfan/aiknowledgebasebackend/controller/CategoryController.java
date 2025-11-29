@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fanfan.aiknowledgebasebackend.domain.dto.BatchDeleteRequest;
 import com.fanfan.aiknowledgebasebackend.domain.dto.CategoryRequest;
 import com.fanfan.aiknowledgebasebackend.domain.dto.CatReq;
+import com.fanfan.aiknowledgebasebackend.domain.dto.NoteCategoryTree;
 import com.fanfan.aiknowledgebasebackend.domain.entity.LinkCategory;
 import com.fanfan.aiknowledgebasebackend.domain.entity.Mindmap;
 import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapCategory;
@@ -110,7 +111,7 @@ public class CategoryController {
     }
     
     @GetMapping("/notes/tree")
-    public List<NoteCategory> listNoteTree(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+    public List<NoteCategoryTree> listNoteTree(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
         User u = userService.findByUsername(principal.getUsername());
         List<NoteCategory> allCategories = noteCategoryMapper.selectList(new LambdaQueryWrapper<NoteCategory>()
                 .eq(NoteCategory::getUserId, u.getId())
@@ -120,25 +121,49 @@ public class CategoryController {
         return buildTree(allCategories);
     }
     
-    private List<NoteCategory> buildTree(List<NoteCategory> categories) {
-        Map<Long, NoteCategory> categoryMap = categories.stream()
-                .collect(Collectors.toMap(NoteCategory::getId, c -> c));
+    private List<NoteCategoryTree> buildTree(List<NoteCategory> categories) {
+        // 转换为DTO
+        List<NoteCategoryTree> dtoList = categories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        
+        Map<Long, NoteCategoryTree> dtoMap = dtoList.stream()
+                .collect(Collectors.toMap(NoteCategoryTree::getId, dto -> dto));
         
         // 设置子分类
-        for (NoteCategory category : categories) {
-            if (category.getParentId() != null && categoryMap.containsKey(category.getParentId())) {
-                NoteCategory parent = categoryMap.get(category.getParentId());
+        for (NoteCategoryTree dto : dtoList) {
+            if (dto.getParentId() != null && dtoMap.containsKey(dto.getParentId())) {
+                NoteCategoryTree parent = dtoMap.get(dto.getParentId());
                 if (parent.getChildren() == null) {
                     parent.setChildren(new ArrayList<>());
                 }
-                parent.getChildren().add(category);
+                parent.getChildren().add(dto);
             }
         }
         
         // 返回根分类（没有父分类的分类）
-        return categories.stream()
-                .filter(c -> c.getParentId() == null)
+        return dtoList.stream()
+                .filter(dto -> dto.getParentId() == null)
                 .collect(Collectors.toList());
+    }
+    
+    private NoteCategoryTree convertToDTO(NoteCategory category) {
+        NoteCategoryTree dto = new NoteCategoryTree();
+        dto.setId(category.getId());
+        dto.setUserId(category.getUserId());
+        dto.setName(category.getName());
+        dto.setParentId(category.getParentId());
+        dto.setCreatedAt(category.getCreatedAt());
+        dto.setUpdatedAt(category.getUpdatedAt());
+        dto.setSortOrder(category.getSortOrder());
+        dto.setIcon(category.getIcon());
+        dto.setCoverKey(category.getCoverKey());
+        dto.setDescription(category.getDescription());
+        dto.setVisibility(category.getVisibility());
+        dto.setItemCount(category.getItemCount());
+        dto.setBackgroundStyle(category.getBackgroundStyle());
+        dto.setBadgeText(category.getBadgeText());
+        return dto;
     }
 
     @DeleteMapping("/notes/{id}")
