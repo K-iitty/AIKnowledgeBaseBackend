@@ -6,6 +6,7 @@ import com.anji.captcha.service.CaptchaService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.mapper.UserMapper;
+import com.fanfan.aiknowledgebasebackend.service.UserCacheService;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
 import com.fanfan.aiknowledgebasebackend.common.util.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,12 +21,15 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final CaptchaService captchaService;
+    private final UserCacheService userCacheService;
 
-    public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, CaptchaService captchaService) {
+    public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, 
+                          CaptchaService captchaService, UserCacheService userCacheService) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.captchaService = captchaService;
+        this.userCacheService = userCacheService;
     }
 
     @Override
@@ -81,6 +85,10 @@ public class UserServiceImpl implements UserService {
         }
         user.setLastLoginAt(LocalDateTime.now());
         userMapper.updateById(user);
+        
+        // 登录成功后，将用户信息写入缓存
+        userCacheService.updateUserCache(user);
+        
         return jwtUtil.generateToken(username, user.getId(), user.getRole());
     }
 

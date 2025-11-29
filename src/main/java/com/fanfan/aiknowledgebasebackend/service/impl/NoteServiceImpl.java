@@ -3,6 +3,7 @@ package com.fanfan.aiknowledgebasebackend.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fanfan.aiknowledgebasebackend.domain.entity.Note;
 import com.fanfan.aiknowledgebasebackend.mapper.NoteMapper;
+import com.fanfan.aiknowledgebasebackend.service.NoteCacheService;
 import com.fanfan.aiknowledgebasebackend.service.NoteService;
 import com.fanfan.aiknowledgebasebackend.service.OssService;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -24,10 +25,12 @@ public class NoteServiceImpl implements NoteService {
 
     private final NoteMapper noteMapper;
     private final OssService ossService;
+    private final NoteCacheService noteCacheService;
 
-    public NoteServiceImpl(NoteMapper noteMapper, OssService ossService) {
+    public NoteServiceImpl(NoteMapper noteMapper, OssService ossService, NoteCacheService noteCacheService) {
         this.noteMapper = noteMapper;
         this.ossService = ossService;
+        this.noteCacheService = noteCacheService;
     }
 
     @Override
@@ -50,6 +53,8 @@ public class NoteServiceImpl implements NoteService {
         n.setCreatedAt(LocalDateTime.now());
         n.setUpdatedAt(LocalDateTime.now());
         noteMapper.insert(n);
+        // 清除用户笔记列表缓存
+        noteCacheService.deleteUserNoteListCache(userId);
         return n;
     }
 
@@ -97,6 +102,8 @@ public class NoteServiceImpl implements NoteService {
         n.setCreatedAt(LocalDateTime.now());
         n.setUpdatedAt(LocalDateTime.now());
         noteMapper.insert(n);
+        // 清除用户笔记列表缓存
+        noteCacheService.deleteUserNoteListCache(userId);
         return n;
     }
 
@@ -106,6 +113,8 @@ public class NoteServiceImpl implements NoteService {
         if (n != null) {
             ossService.delete(n.getOssKey());
             noteMapper.deleteById(id);
+            // 删除笔记相关缓存
+            noteCacheService.deleteNoteCache(id, n.getUserId());
         }
     }
 
@@ -188,7 +197,8 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public Note getById(Long id) {
-        Note note = noteMapper.selectById(id);
+        // 优先从缓存获取
+        Note note = noteCacheService.getNoteById(id);
         // 确保内容字段被填充
         if (note != null && note.getContent() == null) {
             try {
@@ -219,6 +229,8 @@ public class NoteServiceImpl implements NoteService {
         if (visibility != null) n.setVisibility(visibility);
         n.setUpdatedAt(LocalDateTime.now());
         noteMapper.updateById(n);
+        // 删除笔记相关缓存
+        noteCacheService.deleteNoteCache(id, n.getUserId());
         return n;
     }
 
@@ -232,25 +244,31 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public List<Note> listByUserId(Long userId) {
-        return noteMapper.selectList(new LambdaQueryWrapper<Note>()
+        // 优先从缓存获取用户笔记列表
+        return noteCacheService.getUserNoteList(userId, () -> 
+            noteMapper.selectList(new LambdaQueryWrapper<Note>()
                 .eq(Note::getUserId, userId)
-                .orderByDesc(Note::getCreatedAt));
+                .orderByDesc(Note::getCreatedAt))
+        );
     }
 
     @Override
     public String getNoteContent(Long id) {
-        try {
-            // 首先尝试从content字段获取内容
-            Note note = noteMapper.selectById(id);
-            if (note != null && note.getContent() != null) {
-                return note.getContent();
+        // 优先从缓存获取笔记内容
+        return noteCacheService.getNoteContent(id, () -> {
+            try {
+                // 首先尝试从content字段获取内容
+                Note note = noteMapper.selectById(id);
+                if (note != null && note.getContent() != null) {
+                    return note.getContent();
+                }
+                
+                // 如果content字段为空，则从OSS获取
+                InputStream is = download(id);
+                return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to get note content for id: " + id, e);
             }
-            
-            // 如果content字段为空，则从OSS获取
-            InputStream is = download(id);
-            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get note content for id: " + id, e);
-        }
+        });
     }
 }

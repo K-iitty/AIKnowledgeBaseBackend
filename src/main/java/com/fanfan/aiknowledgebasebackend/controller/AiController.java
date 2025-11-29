@@ -1,5 +1,6 @@
 package com.fanfan.aiknowledgebasebackend.controller;
 
+import com.fanfan.aiknowledgebasebackend.common.annotation.RateLimit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -196,6 +197,7 @@ public class AiController {
     }
 
     @PostMapping("/chat/session")
+    @RateLimit(key = "ratelimit:ai", window = 60, maxCount = 10, message = "AI对话请求过于频繁，请稍后再试（每分钟最多10次）")
     public Map<String, Object> chatWithSession(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestBody ChatSessionRequest req) {
         User u = userService.findByUsername(principal.getUsername());
         ChatSession s = chatSessionMapper.selectById(req.getSessionId());
@@ -297,6 +299,7 @@ public class AiController {
     }
 
     @PostMapping("/polish")
+    @RateLimit(key = "ratelimit:ai:polish", window = 60, maxCount = 10, message = "AI润色请求过于频繁，请稍后再试（每分钟最多10次）")
     public Map<String, Object> polishNote(@RequestBody PolishRequest req) {
         String content = req.getContent();
         if (content == null || content.trim().isEmpty()) {
@@ -346,6 +349,7 @@ public class AiController {
     }
     
     @PostMapping("/generate-summary")
+    @RateLimit(key = "ratelimit:ai:summary", window = 60, maxCount = 10, message = "AI摘要请求过于频繁，请稍后再试（每分钟最多10次）")
     public Map<String, Object> generateSummary(@RequestBody SummaryRequest req) {
         String content = req.getContent();
         if (content == null || content.trim().isEmpty()) {
