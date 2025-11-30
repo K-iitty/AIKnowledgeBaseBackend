@@ -1,4 +1,4 @@
-package com.fanfan.aiknowledgebasebackend.util;
+package com.fanfan.aiknowledgebasebackend.common.util;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
