@@ -39,14 +39,19 @@ public class DashboardServiceImpl implements DashboardService {
     }
     
     @Override
-    public DashboardStatsVO getStatistics() {
+    public DashboardStatsVO getStatistics(Integer days) {
+        // 默认7天，支持7天或30天
+        if (days == null || (days != 7 && days != 30)) {
+            days = 7;
+        }
+        
         DashboardStatsVO stats = new DashboardStatsVO();
         
         // 总览数据
         stats.setOverview(getOverviewStats());
         
-        // 趋势数据
-        stats.setTrend(getTrendData());
+        // 趋势数据（根据天数）
+        stats.setTrend(getTrendData(days));
         
         // 分类统计
         stats.setCategory(getCategoryStats());
@@ -123,21 +128,22 @@ public class DashboardServiceImpl implements DashboardService {
     
     /**
      * 获取趋势数据
+     * @param days 统计天数（7或30）
      */
-    private DashboardStatsVO.TrendData getTrendData() {
+    private DashboardStatsVO.TrendData getTrendData(Integer days) {
         DashboardStatsVO.TrendData trend = new DashboardStatsVO.TrendData();
         
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd");
         List<String> dates = new ArrayList<>();
         
-        // 最近7天的日期
-        for (int i = 6; i >= 0; i--) {
+        // 根据天数生成日期列表
+        for (int i = days - 1; i >= 0; i--) {
             dates.add(LocalDate.now().minusDays(i).format(formatter));
         }
         
         // 用户趋势
         List<Long> userCounts = new ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
+        for (int i = days - 1; i >= 0; i--) {
             LocalDateTime start = LocalDate.now().minusDays(i).atStartOfDay();
             LocalDateTime end = start.plusDays(1);
             long count = userMapper.selectCount(new QueryWrapper<User>()
@@ -149,7 +155,7 @@ public class DashboardServiceImpl implements DashboardService {
         
         // 笔记趋势
         List<Long> noteCounts = new ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
+        for (int i = days - 1; i >= 0; i--) {
             LocalDateTime start = LocalDate.now().minusDays(i).atStartOfDay();
             LocalDateTime end = start.plusDays(1);
             long count = noteMapper.selectCount(new QueryWrapper<Note>()
@@ -161,7 +167,7 @@ public class DashboardServiceImpl implements DashboardService {
         
         // 思维导图趋势
         List<Long> mindmapCounts = new ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
+        for (int i = days - 1; i >= 0; i--) {
             LocalDateTime start = LocalDate.now().minusDays(i).atStartOfDay();
             LocalDateTime end = start.plusDays(1);
             long count = mindmapMapper.selectCount(new QueryWrapper<Mindmap>()
@@ -173,7 +179,7 @@ public class DashboardServiceImpl implements DashboardService {
         
         // AI提问趋势
         List<Long> aiQuestionCounts = new ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
+        for (int i = days - 1; i >= 0; i--) {
             LocalDateTime start = LocalDate.now().minusDays(i).atStartOfDay();
             LocalDateTime end = start.plusDays(1);
             long count = chatMessageMapper.selectCount(new QueryWrapper<ChatMessage>()

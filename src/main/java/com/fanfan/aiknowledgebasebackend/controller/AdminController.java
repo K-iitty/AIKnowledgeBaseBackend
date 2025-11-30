@@ -71,8 +71,8 @@ public class AdminController {
      */
     @GetMapping("/dashboard/stats")
     @Operation(summary = "获取统计数据", description = "获取管理后台仪表板的所有统计数据")
-    public DashboardStatsVO getStats() {
-        return dashboardService.getStatistics();
+    public DashboardStatsVO getStats(@RequestParam(defaultValue = "7") Integer days) {
+        return dashboardService.getStatistics(days);
     }
     
     /**
