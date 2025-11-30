@@ -37,14 +37,17 @@ public class AiController {
     private final NoteService noteService;
     private final UserService userService;
     private final EnhancedAiService enhancedAiService;
+    private final com.fanfan.aiknowledgebasebackend.service.DataUpdateService dataUpdateService;
 
     public AiController(ChatSessionMapper chatSessionMapper, ChatMessageMapper chatMessageMapper, 
-                         NoteService noteService, UserService userService, EnhancedAiService enhancedAiService) {
+                         NoteService noteService, UserService userService, EnhancedAiService enhancedAiService,
+                         com.fanfan.aiknowledgebasebackend.service.DataUpdateService dataUpdateService) {
         this.chatSessionMapper = chatSessionMapper;
         this.chatMessageMapper = chatMessageMapper;
         this.noteService = noteService;
         this.userService = userService;
         this.enhancedAiService = enhancedAiService;
+        this.dataUpdateService = dataUpdateService;
     }
 
     @Value("${spring.ai.dashscope.api-key:}")
@@ -161,6 +164,8 @@ public class AiController {
         s.setCreatedAt(java.time.LocalDateTime.now());
         s.setUpdatedAt(java.time.LocalDateTime.now());
         chatSessionMapper.insert(s);
+        // 发布 AI 对话更新事件
+        dataUpdateService.publishUpdate("ai-chat", "create");
         return s;
     }
 
@@ -216,6 +221,10 @@ public class AiController {
             Map<String, Object> out = new HashMap<>();
             out.put("answer", answer);
             out.put("sessionId", s.getId());
+            
+            // 发布 AI 对话更新事件
+            dataUpdateService.publishUpdate("ai-chat", "create");
+            
             return out;
             
         } catch (Exception e) {
@@ -267,6 +276,10 @@ public class AiController {
                 
                 System.out.println("流式传输完成，共发送 " + chunkCount.get() + " 个数据块，发送[DONE]标记");
                 emitter.send(SseEmitter.event().data("[DONE]"));
+                
+                // 发布 AI 对话更新事件
+                dataUpdateService.publishUpdate("ai-chat", "create");
+                
                 emitter.complete();
                 System.out.println("SSE连接已完成");
             } catch (Exception e) { 

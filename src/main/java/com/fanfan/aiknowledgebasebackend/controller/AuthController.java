@@ -21,16 +21,21 @@ public class AuthController {
 
     private final UserService userService;
     private final CaptchaService captchaService;
+    private final com.fanfan.aiknowledgebasebackend.service.DataUpdateService dataUpdateService;
 
-    public AuthController(UserService userService, CaptchaService captchaService) {
+    public AuthController(UserService userService, CaptchaService captchaService,
+                         com.fanfan.aiknowledgebasebackend.service.DataUpdateService dataUpdateService) {
         this.userService = userService;
         this.captchaService = captchaService;
+        this.dataUpdateService = dataUpdateService;
     }
 
     @PostMapping("/register")
     @Operation(summary = "用户注册", description = "用户注册新账号")
     public ResponseEntity<User> register(@Valid @RequestBody RegisterRequest req) {
         User u = userService.register(req.getUsername(), req.getPassword(), req.getNickname(), req.getEmail(), req.getPhone());
+        // 发布用户注册事件
+        dataUpdateService.publishUpdate("user", "create");
         return ResponseEntity.ok(u);
     }
 

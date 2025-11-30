@@ -53,7 +53,16 @@ public class CategoryController {
 
     @GetMapping("/notes")
     public List<NoteCategory> listNotes(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
-        User u = userService.findByUsername(principal.getUsername());
+        String username = principal.getUsername();
+        
+        // 如果是管理员，返回所有笔记分类
+        if (username.startsWith("admin:")) {
+            return noteCategoryMapper.selectList(new LambdaQueryWrapper<NoteCategory>()
+                    .orderByAsc(NoteCategory::getSortOrder));
+        }
+        
+        // 普通用户只返回自己的分类
+        User u = userService.findByUsername(username);
         return noteCategoryMapper.selectList(new LambdaQueryWrapper<NoteCategory>()
                 .eq(NoteCategory::getUserId, u.getId())
                 .orderByAsc(NoteCategory::getSortOrder));
@@ -205,7 +214,16 @@ public class CategoryController {
 
     @GetMapping("/mindmaps")
     public List<MindmapCategory> listMindmaps(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
-        User u = userService.findByUsername(principal.getUsername());
+        String username = principal.getUsername();
+        
+        // 如果是管理员，返回所有思维导图分类
+        if (username.startsWith("admin:")) {
+            return mindmapCategoryMapper.selectList(new LambdaQueryWrapper<MindmapCategory>()
+                    .orderByAsc(MindmapCategory::getSortOrder));
+        }
+        
+        // 普通用户只返回自己的分类
+        User u = userService.findByUsername(username);
         return mindmapCategoryMapper.selectList(new LambdaQueryWrapper<MindmapCategory>()
                 .eq(MindmapCategory::getUserId, u.getId())
                 .orderByAsc(MindmapCategory::getSortOrder));
@@ -301,7 +319,15 @@ public class CategoryController {
 
     @GetMapping("/links")
     public List<LinkCategory> listLinks(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
-        User u = userService.findByUsername(principal.getUsername());
+        String username = principal.getUsername();
+        
+        // 如果是管理员，返回所有链接分类
+        if (username.startsWith("admin:")) {
+            return linkCategoryMapper.selectList(new LambdaQueryWrapper<LinkCategory>());
+        }
+        
+        // 普通用户只返回自己的分类
+        User u = userService.findByUsername(username);
         return linkCategoryMapper.selectList(new LambdaQueryWrapper<LinkCategory>().eq(LinkCategory::getUserId, u.getId()));
     }
 

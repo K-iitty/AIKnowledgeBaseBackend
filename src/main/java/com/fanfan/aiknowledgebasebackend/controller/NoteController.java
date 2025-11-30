@@ -5,6 +5,7 @@ import com.fanfan.aiknowledgebasebackend.domain.entity.Note;
 import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
 import com.fanfan.aiknowledgebasebackend.service.NoteService;
+import com.fanfan.aiknowledgebasebackend.service.DataUpdateService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,22 +24,30 @@ public class NoteController {
 
     private final NoteService noteService;
     private final UserService userService;
+    private final DataUpdateService dataUpdateService;
 
-    public NoteController(NoteService noteService, UserService userService) {
+    public NoteController(NoteService noteService, UserService userService, DataUpdateService dataUpdateService) {
         this.noteService = noteService;
         this.userService = userService;
+        this.dataUpdateService = dataUpdateService;
     }
 
     @PostMapping
     public Note create(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestBody NoteRequest req) {
         User u = userService.findByUsername(principal.getUsername());
-        return noteService.createFromContent(u.getId(), req.getCategoryId(), req.getTitle(), req.getDescription(), req.getContent(), req.getVisibility(), req.getTags(), req.getCoverKey());
+        Note note = noteService.createFromContent(u.getId(), req.getCategoryId(), req.getTitle(), req.getDescription(), req.getContent(), req.getVisibility(), req.getTags(), req.getCoverKey());
+        // 发布数据更新通知
+        dataUpdateService.publishUpdate("note", "create");
+        return note;
     }
 
     @PostMapping("/import")
     public Note importFile(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestParam Long categoryId, @RequestParam String visibility, @RequestPart("file") MultipartFile file) {
         User u = userService.findByUsername(principal.getUsername());
-        return noteService.importFile(u.getId(), categoryId, file, visibility);
+        Note note = noteService.importFile(u.getId(), categoryId, file, visibility);
+        // 发布数据更新通知
+        dataUpdateService.publishUpdate("note", "create");
+        return note;
     }
 
     @GetMapping("/list")
@@ -50,6 +59,8 @@ public class NoteController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         noteService.deleteNote(id);
+        // 发布数据更新通知
+        dataUpdateService.publishUpdate("note", "delete");
     }
 
     @GetMapping("/{id}/download")
@@ -94,7 +105,10 @@ public class NoteController {
 
     @PutMapping("/{id}")
     public Note update(@PathVariable Long id, @RequestBody NoteRequest req) {
-        return noteService.update(id, req.getTitle(), req.getDescription(), req.getContent(), req.getTags(), req.getCoverKey(), req.getVisibility());
+        Note note = noteService.update(id, req.getTitle(), req.getDescription(), req.getContent(), req.getTags(), req.getCoverKey(), req.getVisibility());
+        // 发布数据更新通知
+        dataUpdateService.publishUpdate("note", "update");
+        return note;
     }
 
     @PostMapping("/{id}/like")

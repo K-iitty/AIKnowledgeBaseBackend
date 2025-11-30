@@ -47,8 +47,10 @@ public class SecurityConfig {
                         // 允许匿名访问的路径
                         .requestMatchers(
                                 "/api/auth/**",          // 认证相关接口
+                                "/api/admin/login",      // 管理员登录接口
                                 "/api/ai/**",            // AI相关接口
                                 "/api/files/proxy-pdf",  // PDF代理接口
+                                "/ws/**",                // WebSocket 端点
                                 "/swagger-ui.html",      // Swagger UI页面
                                 "/swagger-ui/**",        // Swagger UI资源
                                 "/v3/api-docs/**"        // API文档资源

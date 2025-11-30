@@ -5,6 +5,7 @@ import com.fanfan.aiknowledgebasebackend.domain.entity.Link;
 import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.service.LinkService;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
+import com.fanfan.aiknowledgebasebackend.service.DataUpdateService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,16 +17,20 @@ public class LinkController {
 
     private final LinkService linkService;
     private final UserService userService;
+    private final DataUpdateService dataUpdateService;
 
-    public LinkController(LinkService linkService, UserService userService) {
+    public LinkController(LinkService linkService, UserService userService, DataUpdateService dataUpdateService) {
         this.linkService = linkService;
         this.userService = userService;
+        this.dataUpdateService = dataUpdateService;
     }
 
     @PostMapping
     public Link create(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestBody LinkRequest req) {
         User u = userService.findByUsername(principal.getUsername());
-        return linkService.create(u.getId(), req.getCategoryId(), req.getTitle(), req.getUrl(), req.getRemark(), req.getIcon(), req.getOrderIndex());
+        Link link = linkService.create(u.getId(), req.getCategoryId(), req.getTitle(), req.getUrl(), req.getRemark(), req.getIcon(), req.getOrderIndex());
+        dataUpdateService.publishUpdate("link", "create");
+        return link;
     }
 
     @GetMapping("/list")
@@ -37,11 +42,14 @@ public class LinkController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         linkService.delete(id);
+        dataUpdateService.publishUpdate("link", "delete");
     }
     
     @PutMapping("/{id}")
     public Link update(@PathVariable Long id, @RequestBody LinkRequest req) {
-        return linkService.update(id, req.getCategoryId(), req.getTitle(), req.getUrl(), req.getRemark(), req.getIcon(), req.getOrderIndex());
+        Link link = linkService.update(id, req.getCategoryId(), req.getTitle(), req.getUrl(), req.getRemark(), req.getIcon(), req.getOrderIndex());
+        dataUpdateService.publishUpdate("link", "update");
+        return link;
     }
 
 }

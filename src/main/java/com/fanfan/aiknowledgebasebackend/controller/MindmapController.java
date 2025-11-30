@@ -7,6 +7,7 @@ import com.fanfan.aiknowledgebasebackend.domain.entity.MindmapTag;
 import com.fanfan.aiknowledgebasebackend.domain.entity.User;
 import com.fanfan.aiknowledgebasebackend.service.MindmapService;
 import com.fanfan.aiknowledgebasebackend.service.UserService;
+import com.fanfan.aiknowledgebasebackend.service.DataUpdateService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,29 +20,37 @@ public class MindmapController {
 
     private final MindmapService mindmapService;
     private final UserService userService;
+    private final DataUpdateService dataUpdateService;
 
-    public MindmapController(MindmapService mindmapService, UserService userService) {
+    public MindmapController(MindmapService mindmapService, UserService userService, DataUpdateService dataUpdateService) {
         this.mindmapService = mindmapService;
         this.userService = userService;
+        this.dataUpdateService = dataUpdateService;
     }
 
     @PostMapping
     public Mindmap create(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
                           @RequestBody MindmapCreateRequest req) {
         User u = userService.findByUsername(principal.getUsername());
-        return mindmapService.create(u.getId(), req.getCategoryId(), req.getTitle(), req.getDescription(), req.getCoverKey(), req.getVisibility());
+        Mindmap mindmap = mindmapService.create(u.getId(), req.getCategoryId(), req.getTitle(), req.getDescription(), req.getCoverKey(), req.getVisibility());
+        dataUpdateService.publishUpdate("mindmap", "create");
+        return mindmap;
     }
 
     @PostMapping("/import")
     public Mindmap importFile(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestParam Long categoryId, @RequestParam String visibility, @RequestPart("file") MultipartFile file) {
         User u = userService.findByUsername(principal.getUsername());
-        return mindmapService.importFile(u.getId(), categoryId, file, visibility);
+        Mindmap mindmap = mindmapService.importFile(u.getId(), categoryId, file, visibility);
+        dataUpdateService.publishUpdate("mindmap", "create");
+        return mindmap;
     }
     
     @PostMapping("/import-json")
     public Mindmap importFromJson(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal, @RequestBody MindmapImportRequest req) {
         User u = userService.findByUsername(principal.getUsername());
-        return mindmapService.importFromJson(u.getId(), req.getCategoryId(), req.getTitle(), req.getContent(), req.getNodeCount(), req.getVisibility());
+        Mindmap mindmap = mindmapService.importFromJson(u.getId(), req.getCategoryId(), req.getTitle(), req.getContent(), req.getNodeCount(), req.getVisibility());
+        dataUpdateService.publishUpdate("mindmap", "create");
+        return mindmap;
     }
 
     @GetMapping("/{id}")
@@ -58,11 +67,14 @@ public class MindmapController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         mindmapService.delete(id);
+        dataUpdateService.publishUpdate("mindmap", "delete");
     }
 
     @PutMapping("/{id}")
     public Mindmap update(@PathVariable Long id, @RequestBody MindmapUpdateRequest req) {
-        return mindmapService.update(id, req.getTitle(), req.getDescription(), req.getCoverKey(), req.getVisibility());
+        Mindmap mindmap = mindmapService.update(id, req.getTitle(), req.getDescription(), req.getCoverKey(), req.getVisibility());
+        dataUpdateService.publishUpdate("mindmap", "update");
+        return mindmap;
     }
 
     @GetMapping("/{id}/download")
