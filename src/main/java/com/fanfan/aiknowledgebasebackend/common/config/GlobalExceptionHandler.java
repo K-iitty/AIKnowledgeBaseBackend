@@ -45,6 +45,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, Object> handleRuntime(RuntimeException ex) {
+        System.err.println("RuntimeException 捕获: " + ex.getMessage());
+        ex.printStackTrace();
         Map<String, Object> m = new HashMap<>();
         m.put("code", 400);
         m.put("message", ex.getMessage());

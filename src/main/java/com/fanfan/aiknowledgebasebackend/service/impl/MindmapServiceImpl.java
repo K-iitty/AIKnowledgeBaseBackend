@@ -13,14 +13,20 @@ import com.fanfan.aiknowledgebasebackend.service.MindmapService;
 import com.fanfan.aiknowledgebasebackend.service.OssService;
 import com.fanfan.aiknowledgebasebackend.service.XMindParserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 @Service
 public class MindmapServiceImpl implements MindmapService {
@@ -185,6 +191,7 @@ public class MindmapServiceImpl implements MindmapService {
     }
 
     @Override
+    @CacheEvict(value = "mindmap:info", key = "#id")  // 清除元数据缓存
     public void delete(Long id) {
         Mindmap m = mindmapMapper.selectById(id);
         if (m != null) {
@@ -223,6 +230,7 @@ public class MindmapServiceImpl implements MindmapService {
     }
 
     @Override
+    @CacheEvict(value = "mindmap:info", key = "#id")  // 清除元数据缓存
     public Mindmap update(Long id, String title, String description, String coverKey, String visibility) {
         Mindmap m = mindmapMapper.selectById(id);
         if (m == null) throw new RuntimeException("思维导图不存在");
@@ -257,20 +265,175 @@ public class MindmapServiceImpl implements MindmapService {
 
     @Override
     public Mindmap getById(Long id) {
-        Mindmap mindmap = mindmapMapper.selectById(id);
-        if (mindmap != null) {
-            // 增加浏览量（每次查看都增加）
-            mindmap.setViews(mindmap.getViews() == null ? 1 : mindmap.getViews() + 1);
-            mindmapMapper.updateById(mindmap);
+        try {
+            System.out.println("从数据库查询思维导图: " + id);
+            
+            // 企业级方案：分离缓存策略
+            // 1. 先获取基本信息（可以缓存）
+            Mindmap mindmap = getMindmapInfo(id);
+            
+            if (mindmap != null) {
+                // 增加浏览量
+                mindmap.setViews(mindmap.getViews() == null ? 1 : mindmap.getViews() + 1);
+                mindmapMapper.updateById(mindmap);
+                
+                // 2. 再加载content（按需加载，不缓存）
+                loadMindmapContent(mindmap);
+            }
+            
+            return mindmap;
+        } catch (Exception e) {
+            System.err.println("查询思维导图失败: " + id + ", 错误: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("查询思维导图失败: " + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * 获取思维导图基本信息（缓存）
+     * 不包含content字段，避免大数据序列化问题
+     */
+    @Cacheable(value = "mindmap:info", key = "#id", unless = "#result == null")
+    public Mindmap getMindmapInfo(Long id) {
+        System.out.println("从数据库查询思维导图基本信息: " + id);
+        Mindmap mindmap = mindmapMapper.selectById(id);
+        
+        // 清空content，只缓存元数据
+        if (mindmap != null) {
+            mindmap.setContent(null);
+        }
+        
         return mindmap;
+    }
+    
+    /**
+     * 加载思维导图内容
+     * 从数据库或OSS加载，不缓存
+     */
+    private void loadMindmapContent(Mindmap mindmap) {
+        if (mindmap == null) return;
+        
+        // 如果有OSS URL，从OSS加载
+        if (mindmap.getContentUrl() != null && !mindmap.getContentUrl().isEmpty()) {
+            System.out.println("大型思维导图(" + mindmap.getNodeCount() + "节点)，从OSS加载content");
+            try {
+                java.io.InputStream is = ossService.get(mindmap.getContentUrl());
+                String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                mindmap.setContent(content);
+            } catch (Exception e) {
+                System.err.println("从OSS加载content失败: " + e.getMessage());
+                // 降级：尝试从数据库加载
+                loadContentFromDatabase(mindmap);
+            }
+        } else {
+            // 从数据库加载content
+            System.out.println("小型思维导图(" + mindmap.getNodeCount() + "节点)，从数据库加载content");
+            loadContentFromDatabase(mindmap);
+        }
+    }
+    
+    /**
+     * 从数据库加载content
+     */
+    private void loadContentFromDatabase(Mindmap mindmap) {
+        Mindmap fullData = mindmapMapper.selectById(mindmap.getId());
+        if (fullData != null && fullData.getContent() != null) {
+            mindmap.setContent(fullData.getContent());
+        }
     }
 
     @Override
+    @CacheEvict(value = "mindmap:info", key = "#id")  // 清除元数据缓存
     public void saveContent(Long id, String content, Integer nodeCount) {
         Mindmap m = mindmapMapper.selectById(id);
         if (m == null) throw new RuntimeException("思维导图不存在");
-        m.setContent(content);
+        
+        // 企业级方案：根据节点数量决定存储位置
+        if (nodeCount != null && nodeCount > 100) {
+            // 大型思维导图：存储到OSS
+            System.out.println("大型思维导图(" + nodeCount + "节点)，存储到OSS");
+            try {
+                // 创建临时文件
+                java.io.File tempFile = java.io.File.createTempFile("mindmap_", ".json");
+                java.nio.file.Files.write(tempFile.toPath(), content.getBytes(StandardCharsets.UTF_8));
+                
+                // 创建MultipartFile
+                final java.io.File finalTempFile = tempFile;
+                org.springframework.web.multipart.MultipartFile multipartFile = new org.springframework.web.multipart.MultipartFile() {
+                    @Override
+                    public String getName() {
+                        return "file";
+                    }
+                    
+                    @Override
+                    public String getOriginalFilename() {
+                        return "content_" + System.currentTimeMillis() + ".json";
+                    }
+                    
+                    @Override
+                    public String getContentType() {
+                        return "application/json";
+                    }
+                    
+                    @Override
+                    public boolean isEmpty() {
+                        return finalTempFile.length() == 0;
+                    }
+                    
+                    @Override
+                    public long getSize() {
+                        return finalTempFile.length();
+                    }
+                    
+                    @Override
+                    public byte[] getBytes() throws IOException {
+                        return java.nio.file.Files.readAllBytes(finalTempFile.toPath());
+                    }
+                    
+                    @Override
+                    public java.io.InputStream getInputStream() throws IOException {
+                        return new java.io.FileInputStream(finalTempFile);
+                    }
+                    
+                    @Override
+                    public void transferTo(java.io.File dest) throws IOException {
+                        java.nio.file.Files.copy(finalTempFile.toPath(), dest.toPath());
+                    }
+                };
+                
+                // 上传到OSS
+                String ossKey = ossService.upload("mindmaps/" + id, multipartFile);
+                
+                // 删除旧的OSS文件
+                if (m.getContentUrl() != null && !m.getContentUrl().isEmpty()) {
+                    try {
+                        ossService.delete(m.getContentUrl());
+                    } catch (Exception e) {
+                        System.err.println("删除旧OSS文件失败: " + e.getMessage());
+                    }
+                }
+                
+                // 更新数据库：清空content，设置contentUrl
+                m.setContent(null);  // 不在数据库存储大content
+                m.setContentUrl(ossKey);
+                
+                // 清理临时文件
+                tempFile.delete();
+                
+                System.out.println("OSS上传成功: " + ossKey);
+            } catch (Exception e) {
+                System.err.println("上传到OSS失败，降级存储到数据库: " + e.getMessage());
+                e.printStackTrace();
+                m.setContent(content);  // 降级方案：存储到数据库
+                m.setContentUrl(null);
+            }
+        } else {
+            // 小型思维导图：存储到数据库
+            System.out.println("小型思维导图(" + nodeCount + "节点)，存储到数据库 + Redis缓存");
+            m.setContent(content);
+            m.setContentUrl(null);  // 清空OSS URL
+        }
+        
         m.setNodeCount(nodeCount);
         m.setUpdatedAt(LocalDateTime.now());
         mindmapMapper.updateById(m);
@@ -425,6 +588,7 @@ public class MindmapServiceImpl implements MindmapService {
     }
     
     @Override
+    @CacheEvict(value = "mindmap:info", key = "#id")  // 清除元数据缓存
     public void updateMindmapData(Long id, String content, Integer nodeCount) {
         Mindmap mindmap = mindmapMapper.selectById(id);
         if (mindmap == null) {
