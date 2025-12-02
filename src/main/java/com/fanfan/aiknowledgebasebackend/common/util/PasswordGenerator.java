@@ -11,8 +11,8 @@ public class PasswordGenerator {
     public static void main(String[] args) {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         
-        // 生成默认管理员密码：admin123
-        String password = "admin123";
+        // 生成默认管理员密码：sheep14
+        String password = "sheep14";
         String hash = encoder.encode(password);
         
         System.out.println("=================================");
